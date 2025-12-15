@@ -85,3 +85,4 @@ int tirer(Grille* g, int ligne, int colonne){
         return 0;
     }
 }
+

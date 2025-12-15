@@ -2,12 +2,10 @@
 #include "jeu.h"
 #include "grille.h"
 #include "bateau.h"
+#include "affichage.h"
 
-Joueur* creerJoueur(const char* nom){
+Joueur* creerJoueur(void){
     Joueur* j = malloc(sizeof(Joueur));
-      // Copier le nom
-    strncpy(j->nom, nom, 49);
-    j->nom[49] = '\0';
     
     // Créer les 2 grilles
     j->mesNavires = initialiser();  // Grille de mes bateaux
@@ -31,10 +29,11 @@ void detruireJoueur(Joueur* j)
 
 void phasePreparation(Joueur* j)
 {
+    printf(EFFACE);
     printf("\n");
-    printf("===========================================\n");
-    printf("  %s, placez vos bateaux !\n", j->nom);
-    printf("===========================================\n");
+    printf("========================================\n");
+    printf(CIEL "       %s, placez vos bateaux !\n" RESET, j->NomJoueur);
+    printf("========================================\n");
     
     // Placer les 5 bateaux un par un
     for (int i = 0; i < NB_BATEAUX; i++) {
@@ -72,9 +71,9 @@ void tourJoueur(Joueur* attaquant, Joueur* defenseur)
     int resultat;
     
     printf("\n");
-    printf("===========================================\n");
-    printf("  Tour de %s\n", attaquant->nom);
-    printf("===========================================\n");
+    printf("========================================\n");
+    printf(BLEUGRIS "              Tour de %s\n" RESET, attaquant->NomJoueur);
+    printf("========================================\n");
     
     afficherPlateau(attaquant);
     
@@ -139,44 +138,44 @@ int verifierVictoire(Joueur* adversaire)
 }
 
 
-void jouerPartie(void)
+void jouerPartie(Joueur * joueur1, Joueur * joueur2)
 {
-    printf("\n");
-    printf("===========================================\n");
-    printf("       BATAILLE NAVALE\n");
-    printf("===========================================\n");
+    printf(EFFACE);
+    printf("\n========================================\n");
+    printf(CIEL "           LA BATAILLE NAVALE" RESET);
+    printf(BLEUGRIS "\n       made by Julien, Alix, Enzo" RESET);
+    printf("\n========================================\n");
     
-    // Créer les 2 joueurs
-    Joueur* joueur1 = creerJoueur("Joueur 1");
-    Joueur* joueur2 = creerJoueur("Joueur 2");
     
     // Phase de préparation
     phasePreparation(joueur1);
     
-    printf("\n\n>>> Passez le terminal au Joueur 2 <<<\n");
-    printf("Appuyez sur Entrée quand prêt...");
+    printf("\n\n>>> Passez le terminal à %s <<<\n", joueur2 -> NomJoueur);
+    printf("Appuyez sur Entrée ...");
     getchar();
     
     phasePreparation(joueur2);
     
     // Boucle de jeu
     int tourNumero = 1;
-    while (1) {
+    Joueur * gagnant = NULL;
+    while (gagnant == NULL) {
+        printf(EFFACE);
         printf("\n\n");
-        printf("===========================================\n");
-        printf("           TOUR %d\n", tourNumero);
-        printf("===========================================\n");
+        printf("========================================\n");
+        printf(BLEUGRIS "           TOUR %d\n" RESET, tourNumero);
+        printf("========================================\n");
         
         // Tour du joueur 1
         tourJoueur(joueur1, joueur2);
         
         // Vérifier victoire
         if (verifierVictoire(joueur2)) {
-            printf("\n🎉🎉🎉 %s A GAGNÉ ! 🎉🎉🎉\n", joueur1->nom);
+            gagnant = joueur1;
             break;
         }
         
-        printf("\n>>> Passez au Joueur 2 <<<");
+        printf("\n>>> Passez le terminal à %s <<<", joueur2 -> NomJoueur);
         printf("\nAppuyez sur Entrée...");
         getchar();
         
@@ -185,11 +184,11 @@ void jouerPartie(void)
         
         // Vérifier victoire
         if (verifierVictoire(joueur1)) {
-            printf("\n🎉🎉🎉 %s A GAGNÉ ! 🎉🎉🎉\n", joueur2->nom);
+            gagnant = joueur2;
             break;
         }
         
-        printf("\n>>> Passez au Joueur 1 <<<");
+        printf("\n>>> Passez le terminal à %s <<<", joueur1 -> NomJoueur);
         printf("\nAppuyez sur Entrée...");
         getchar();
         
@@ -199,8 +198,7 @@ void jouerPartie(void)
     // Nettoyage
     detruireJoueur(joueur1);
     detruireJoueur(joueur2);
-    
-    printf("\n===========================================\n");
-    printf("         PARTIE TERMINÉE\n");
-    printf("===========================================\n");
+    AjouterVictoire1c1(joueur1);
+    MenuFinDePartie(gagnant);
 }
+

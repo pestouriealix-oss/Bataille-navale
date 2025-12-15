@@ -7,14 +7,15 @@
 #include "bateau.h"
 
 typedef struct {
-    char nom[50];
+    char NomJoueur[20];
+    int NbVictoire;
     Grille* mesNavires;    // Où sont placés MES bateaux
     Grille* mesTirs;       // Où j'ai TIRÉ sur l'adversaire
     Bateaux* flotte;       // Mes 5 bateaux
 } Joueur;
 
 // === Gestion des joueurs ===
-Joueur* creerJoueur(const char* nom);
+Joueur* creerJoueur(void);
 void detruireJoueur(Joueur* j);
 
 // === Phase de préparation ===
@@ -26,6 +27,7 @@ int verifierVictoire(Joueur* j);
 void afficherPlateau(Joueur* j);
 
 // === Fonction principale ===
-void jouerPartie(void);
+void jouerPartie(Joueur * joueur1, Joueur * joueur2);
 
 #endif
+

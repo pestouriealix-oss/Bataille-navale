@@ -45,3 +45,4 @@ int tousCoules(Bateaux* flotte);
 int trouverBateau(Bateaux* flotte, int ligne, int colonne);
 
 #endif
+

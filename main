@@ -1,6 +1,0 @@
-#include"affichage.h"
-
-int main(void){
-    MenuPrincipal();
-    return 0;
-}

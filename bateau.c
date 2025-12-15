@@ -2,109 +2,157 @@
 #include "grille.h"
 #include "bateau.h"
 
+/* ============================================================================
+ * INITIALISATION ET MÉMOIRE
+ * ============================================================================ */
+
+/* -------------------------------------------------------------------------
+ * Création de la flotte standard
+ * Alloue un tableau de 5 bateaux et configure leurs caractéristiques
+ * selon les règles classiques de la Bataille Navale.
+ * ------------------------------------------------------------------------- */
 Bateaux* creerFlotte(void)
 {
+    // 1. Allocation du tableau pour 5 structures Bateaux
     Bateaux* flotte = malloc(NB_BATEAUX * sizeof(Bateaux));
 
-    //Porte-avion
+    // Sécurité allocation (bonnes pratiques)
+    if (flotte == NULL) return NULL;
+
+    // 2. Configuration manuelle des 5 navires
+    
+    // Bateau 1 : Porte-avion (5 cases)
     strcpy(flotte[0].nom, "Porte-avion");
     flotte[0].taille = 5;
     flotte[0].touche = 0;
 
-    //Croiseur
+    // Bateau 2 : Croiseur (4 cases)
     strcpy(flotte[1].nom, "Croiseur");
     flotte[1].taille = 4;
     flotte[1].touche = 0;
 
-    //Contre torpilleurs
+    // Bateau 3 : Contre-torpilleur n°1 (3 cases)
     strcpy(flotte[2].nom, "Contre-torpilleur");
     flotte[2].taille = 3;
     flotte[2].touche = 0;
 
-    //Contre torpilleurs
+    // Bateau 4 : Contre-torpilleur n°2 (3 cases)
     strcpy(flotte[3].nom, "Contre-torpilleur");
     flotte[3].taille = 3;
     flotte[3].touche = 0;
 
-    //Torpilleur
+    // Bateau 5 : Torpilleur (2 cases)
     strcpy(flotte[4].nom, "Torpilleur");
     flotte[4].taille = 2;
     flotte[4].touche = 0;
 
     return flotte;
- 
 }
 
+/* -------------------------------------------------------------------------
+ * Destruction de la flotte
+ * Libère la mémoire du tableau complet.
+ * ------------------------------------------------------------------------- */
 void detruireFlotte (Bateaux* flotte)
 {
-    free(flotte);
+    if (flotte != NULL) {
+        free(flotte);
+    }
 }
 
+/* -------------------------------------------------------------------------
+ * Création d'un bateau unique (Utilitaire)
+ * Utile pour des tests unitaires ou des variantes du jeu.
+ * ------------------------------------------------------------------------- */
 Bateaux* creerBateaux(void)
 {
     Bateaux* b = malloc(sizeof(Bateaux));
-    strcpy(b->nom, "Vide");
-    b->taille = 0;
-    b->ligne = 0;
-    b->colonne = 0;
-    b->orientation = '\0';
-    b->touche = 0;
-
+    if (b != NULL) {
+        strcpy(b->nom, "Vide");
+        b->taille = 0;
+        b->ligne = 0;
+        b->colonne = 0;
+        b->orientation = '\0';
+        b->touche = 0;
+    }
     return b;
 }
 
+/* -------------------------------------------------------------------------
+ * Destruction d'un bateau unique
+ * ------------------------------------------------------------------------- */
 void detruireBateaux(Bateaux* b)
 {
-    free(b);
+    if (b != NULL) {
+        free(b);
+    }
 }
 
+
+/* ============================================================================
+ * PLACEMENT ET INTERACTION
+ * ============================================================================ */
+
+/* -------------------------------------------------------------------------
+ * Positionner un bateau
+ * Gère tout le dialogue avec l'utilisateur pour placer un navire.
+ * Contient la validation des coordonnées, la gestion des erreurs et
+ * la mise à jour de la grille.
+ * ------------------------------------------------------------------------- */
 int positionnerBateau(Bateaux* b, Grille* g)
 {
     int ligne, colonne;
     char orientation;
 
+    // Boucle infinie : on ne sort que si le placement est valide ou si abandon
     while (1) 
     {
         printf("\n--- Placement du %s (Taille %d) ---\n", b->nom, b->taille);
-        printf("Entrez la ligne (1-10) ou '-1' pour quitter : ");
         
+        // --- 1. Saisie de la ligne ---
+        printf("Entrez la ligne (1-10) ou '-1' pour quitter : ");
         scanf("%d", &ligne);
         
-        // VÉRIFIER -1 IMMÉDIATEMENT
+        // GESTION ABANDON : Si l'utilisateur tape -1
         if (ligne == -1) {
-            // Nettoyer le buffer
+            // Nettoyage buffer indispensable avant de quitter
             int c;
             while ((c = getchar()) != '\n' && c != EOF);
-            return 0;
+            return 0; // Code de retour 0 = Annulation
         }
         
+        // --- 2. Saisie de la colonne ---
         printf("Entrez la colonne (1-10) : ");
         scanf("%d", &colonne);
 
+        // --- 3. Saisie de l'orientation ---
         printf("Orientation (H/V) : ");
-        scanf(" %c", &orientation);
+        scanf(" %c", &orientation); // Espace avant %c pour ignorer les espaces précédents
         
-        // Nettoyer le buffer d'entrée
+        // Nettoyer le buffer d'entrée (vider les entrées parasites)
+        // C'est vital avec scanf pour éviter les boucles infinies en cas d'erreur
         int c;
         while ((c = getchar()) != '\n' && c != EOF);
         
-        // Convertir en majuscule
+        // Normalisation : Accepter minuscules et convertir en majuscules
         if (orientation == 'h') orientation = 'H';
         if (orientation == 'v') orientation = 'V';
         
-        // Convertir en indices 0-9
+        // CONVERSION COORDONNÉES : Humain (1-10) -> Machine (0-9)
         ligne = ligne - 1;
         colonne = colonne - 1;
 
-        // --- VALIDATION ---
+        // --- 4. VALIDATION ---
         
-        // Vérifier orientation valide
+        // A. Orientation correcte ?
         if (orientation != 'H' && orientation != 'V') {
             printf("❌ Erreur : Orientation invalide ! Utilisez H ou V.\n");
-            continue;
+            continue; // Retour au début de la boucle
         }
 
-        // Erreur 1 : Dépassement
+        // B. Dépassement de grille (Hors limites) ?
+        // H : Colonne + taille ne doit pas dépasser 10
+        // V : Ligne + taille ne doit pas dépasser 10
         if ((orientation == 'H' && (colonne + b->taille > 10 || colonne < 0 || ligne < 0 || ligne >= 10)) ||
             (orientation == 'V' && (ligne + b->taille > 10 || ligne < 0 || colonne < 0 || colonne >= 10))) {
             
@@ -112,7 +160,8 @@ int positionnerBateau(Bateaux* b, Grille* g)
             continue;
         }
 
-        // Erreur 2 : Collision
+        // C. Collision (Chevauchement) ?
+        // On vérifie si une des cases futures contient déjà un bateau (1)
         int collision = 0;
         for (int i = 0; i < b->taille; i++) {
             if (orientation == 'H' && g->tab[ligne][colonne + i] == 1) collision = 1;
@@ -124,111 +173,126 @@ int positionnerBateau(Bateaux* b, Grille* g)
             continue;
         }
 
-        // --- SUCCÈS ---
+        // --- 5. APPLICATION (Si tout est valide) ---
+        
+        // On écrit les 1 sur la grille
         for (int i = 0; i < b->taille; i++) {
             if (orientation == 'H') g->tab[ligne][colonne + i] = 1;
             else g->tab[ligne + i][colonne] = 1;
         }
 
+        // On sauvegarde les coordonnées DANS le bateau (pour gestion des dégâts plus tard)
         b->ligne = ligne;
         b->colonne = colonne;
         b->orientation = orientation;
 
         printf("✅ %s placé avec succès !\n", b->nom);
-        return 1;
+        return 1; // Code de retour 1 = Succès
     }
 }
 
+
+/* ============================================================================
+ * GESTION DES DÉGÂTS
+ * ============================================================================ */
+
 void enregistrerTouche(Bateaux* b)
 {
- b->touche = b->touche + 1;
+    // Incrémente simplement le compteur de dégâts
+    b->touche = b->touche + 1;
 }
 
 int estCoule(Bateaux* b)
 {
-    if(b->touche == b->taille)
-    {
-        return 1; // Oui
-    }
-    else 
-    {
-        return 0;
+    // Si nombre de touches == taille totale, le bateau est mort
+    if(b->touche == b->taille) {
+        return 1; // Vrai
+    } else {
+        return 0; // Faux
     }
 }
 
 int estTouche(Bateaux* b)
 {
-    if(b->touche > 0 && b->touche < b->taille)
-    {
-        return 1; //Oui
-    }
-    else 
-    {
-        return 0;
+    // Si touché au moins une fois, mais pas encore coulé
+    if(b->touche > 0 && b->touche < b->taille) {
+        return 1; // Vrai
+    } else {
+        return 0; // Faux
     }
 }
 
 char obtenirEtat(Bateaux* b)
 {
-    if (estCoule(b) == 1)
-    {
-        return 'C';
-    }
-    else if (estTouche(b) == 1)
-    {
-        return 'T';
-    }
-    else 
-    {
-        return 'O';
-    }
+    if (estCoule(b) == 1) return 'C';
+    else if (estTouche(b) == 1) return 'T';
+    else return 'O'; // Opérationnel
 }
 
+
+/* ============================================================================
+ * LOGIQUE SPATIALE 
+ * ============================================================================ */
+
+/* -------------------------------------------------------------------------
+ * Vérifier l'appartenance d'une case à un bateau
+ * Cette fonction contient la logique mathématique pour savoir si un tir
+ * touche CE bateau spécifique.
+ * ------------------------------------------------------------------------- */
 int appartientAuBateau(Bateaux* b, int ligne, int colonne)
 {
-    // Bateau horizontal
+    // Cas 1 : Bateau Horizontal
+    // Il est sur la même LIGNE, et la COLONNE est comprise entre [début, fin[
     if (b->orientation == 'H') {
         if (ligne == b->ligne && 
             colonne >= b->colonne && 
             colonne < b->colonne + b->taille) {
-            return 1;  // Oui, cette position fait partie du bateau
+            return 1;
         }
     }
     
-    // Bateau vertical
+    // Cas 2 : Bateau Vertical
+    // Il est sur la même COLONNE, et la LIGNE est comprise entre [début, fin[
     if (b->orientation == 'V') {
         if (colonne == b->colonne && 
             ligne >= b->ligne && 
             ligne < b->ligne + b->taille) {
-            return 1;  // Oui, cette position fait partie du bateau
+            return 1;
         }
     }
     
-    return 0;  // Non, pas partie du bateau
+    return 0; // La case ne fait pas partie de ce bateau
 }
 
+/* -------------------------------------------------------------------------
+ * Vérification de Victoire Totale
+ * Parcourt toute la flotte pour voir s'il reste des survivants.
+ * ------------------------------------------------------------------------- */
 int tousCoules(Bateaux* flotte)
 {
-    // Vérifier si TOUS les bateaux sont coulés
     for (int i = 0; i < NB_BATEAUX; i++) {
+        // Si UN SEUL bateau n'est pas coulé, la partie continue
         if (estCoule(&flotte[i]) == 0) {
-            return 0;  // Au moins un bateau encore vivant
+            return 0;
         }
     }
-    
-    return 1;  // Tous coulés = victoire !
+    // Si on arrive ici, c'est que la boucle s'est finie sans trouver de survivant
+    return 1;
 }
 
-
+/* -------------------------------------------------------------------------
+ * Identifier un bateau touché
+ * Utile quand le moteur de jeu sait qu'une case contient un '1',
+ * mais doit savoir QUEL bateau c'est pour augmenter ses dégâts.
+ * ------------------------------------------------------------------------- */
 int trouverBateau(Bateaux* flotte, int ligne, int colonne)
 {
-    // Parcourir tous les bateaux de la flotte
+    // On teste chaque bateau de la flotte un par un
     for (int i = 0; i < NB_BATEAUX; i++) {
         if (appartientAuBateau(&flotte[i], ligne, colonne) == 1) {
-            return i;  // Retourne l'index du bateau touché (0-4)
+            return i;  // On retourne l'index (0 à 4) du bateau trouvé
         }
     }
     
-    return -1;  // Aucun bateau à cette position
+    return -1;  // Sécurité : Aucun bateau trouvé à cette position
 }
-

@@ -1,8 +1,7 @@
-#include "jeu.h"
-#include "librairies.h"
+#include"affichage.h"
+#include"jeu.h"
 
-int main(void)
-{
-    jouerPartie();
+int main(void){
+    MenuPrincipal();
     return 0;
 }

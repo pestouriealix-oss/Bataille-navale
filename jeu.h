@@ -1,32 +1,154 @@
-#ifndef _LIBRAIRIES_H_
-#define _LIBRAIRIES_H_
+#ifndef _JEU_H_
+#define _JEU_H_
+
+#include "librairies.h"
+#include "grille.h"
+#include "bateau.h"
 
 /**
  * ============================================================================
- * FICHIER : librairies.h
+ * STRUCT : Joueur
  * ----------------------------------------------------------------------------
- * Ce fichier agit comme un "hub" central pour toutes les bibliothèques
- * standards du C nécessaires au projet.
+ * Représente un participant à la bataille (Humain ou Ordinateur).
+ * * Cette structure regroupe TOUT ce qui définit un joueur :
+ * - Son identité (Nom, Victoires).
+ * - Son état de jeu (ses bateaux, ses grilles).
+ * * * Concept des deux grilles :
+ * 1. mesNavires : C'est la grille DÉFENSIVE. On y place nos bateaux.
+ * L'adversaire tire dessus.
+ * 2. mesTirs    : C'est la grille OFFENSIVE (Brouillard de guerre).
+ * On y note nos tirs (2=Raté, 3=Touché) pour se souvenir où on a tiré.
  * ============================================================================
  */
+typedef struct {
+    char NomJoueur[20];    // Pseudo du joueur
+    int NbVictoire;        // Compteur de victoires (pour le classement)
+    Grille* mesNavires;    // Ma grille avec mes bateaux (Vue complète)
+    Grille* mesTirs;       // Ma grille de suivi des tirs (Vue masquée de l'ennemi)
+    Bateaux* flotte;       // Tableau de mes 5 bateaux (pour gérer leurs PV)
+} Joueur;
 
-/* --- Entrées / Sorties --- */
-#include <stdio.h>      // Indispensable pour printf(), scanf(), et la gestion des fichiers (fopen, fprintf...)
 
-/* --- Gestion Mémoire et Utilitaires --- */
-#include <stdlib.h>     // Pour l'allocation dynamique (malloc, free) et l'aléatoire (rand, srand)
-#include <stddef.h>     // Pour la définition de NULL et size_t
+/* ============================================================================
+ * GESTION MÉMOIRE DES JOUEURS
+ * ============================================================================ */
 
-/* --- Manipulation de Données --- */
-#include <string.h>     // Pour manipuler les noms des joueurs et commandes (strcpy, strcmp, strlen)
-#include <stdint.h>     // Pour des types d'entiers précis (int8_t, int32_t) - Bonnes pratiques
-#include <stdbool.h>    // Pour utiliser les types booléens (bool, true, false) au lieu de 0 et 1
+/**
+ * @brief Alloue et initialise un nouveau joueur.
+ * * Cette fonction :
+ * 1. Alloue la structure Joueur.
+ * 2. Alloue et initialise les 2 grilles (mesNavires, mesTirs).
+ * 3. Alloue et initialise la flotte de 5 bateaux.
+ * * @return Joueur* Pointeur vers le joueur créé.
+ */
+Joueur* creerJoueur(void);
 
-/* --- Mathématiques et Temps --- */
-#include <math.h>       // Fonctions mathématiques (si besoin de calculs complexes)
-#include <time.h>       // Pour time(), essentiel pour initialiser le générateur aléatoire (srand)
+/**
+ * @brief Libère toute la mémoire associée à un joueur.
+ * * Détruit les grilles, la flotte et la structure joueur elle-même.
+ * À appeler obligatoirement en fin de partie.
+ * * @param j Pointeur vers le joueur à détruire.
+ */
+void detruireJoueur(Joueur* j);
 
-/* --- Débogage --- */
-#include <assert.h>     // Pour utiliser assert() lors du développement (vérifier des conditions critiques)
+
+/* ============================================================================
+ * PHASES DE JEU
+ * ============================================================================ */
+
+/**
+ * @brief Gère la phase de placement des bateaux pour un joueur.
+ * * Boucle sur les 5 bateaux pour demander leur placement via 'positionnerBateau'.
+ * * @param j Pointeur vers le joueur qui doit placer sa flotte.
+ * * @return int 
+ * 1 : Succès (Tous les bateaux sont placés).
+ * 0 : Abandon (Le joueur a tapé -1 pour quitter).
+ */
+int phasePreparation(Joueur* j);
+
+/**
+ * @brief Gère un tour complet pour un joueur humain.
+ * * Affiche les plateaux, demande les coordonnées de tir, effectue le tir,
+ * met à jour les grilles et affiche le résultat (Touché/Coulé/Raté).
+ * * @param attaquant Le joueur dont c'est le tour.
+ * @param defenseur L'adversaire qui reçoit le tir.
+ * * @return int 
+ * 0 : Le tour s'est bien passé.
+ * 1 : Le joueur veut QUITTER la partie (a tapé -1).
+ */
+int tourJoueur(Joueur* attaquant, Joueur* defenseur);
+
+/**
+ * @brief Vérifie si un joueur a perdu (toute sa flotte est coulée).
+ * * @param j Le joueur dont on vérifie la flotte (l'adversaire généralement).
+ * * @return int 1 si le joueur a perdu (tous coulés), 0 sinon.
+ */
+int verifierVictoire(Joueur* j);
+
+/**
+ * @brief Affiche l'interface de jeu pour le joueur actif.
+ * * Affiche "MES NAVIRES" (Grille complète) et "MES TIRS" (Grille masquée).
+ * * @param j Le joueur dont on affiche les infos.
+ */
+void afficherPlateau(Joueur* j);
+
+/**
+ * @brief Place aléatoirement toute la flotte d'un joueur sur sa grille.
+ * * Cette fonction génère des coordonnées et des orientations au hasard
+ * pour les 5 bateaux du joueur. Elle garantit :
+ * - Que les bateaux ne sortent pas de la grille (limites 0-9).
+ * - Que les bateaux ne se chevauchent pas (pas de collisions).
+ * * Utile pour l'Intelligence Artificielle ou pour un placement rapide ("Shuffle")
+ * pour un joueur humain.
+ * * @param j Pointeur vers le joueur dont on veut placer la flotte.
+ */
+void placerBateauxAleatoire(Joueur* j);
+
+
+/* ============================================================================
+ * MODES DE JEU (Boucles principales)
+ * ============================================================================ */
+
+/**
+ * @brief Lance une partie en mode "Joueur contre Joueur" (1v1).
+ * * Gère l'alternance des tours, le passage de l'écran ("Passer le terminal"),
+ * et la détection de victoire.
+ * * @param joueur1 Pointeur vers le joueur 1.
+ * @param joueur2 Pointeur vers le joueur 2.
+ */
+void jouerPartie(Joueur * joueur1, Joueur * joueur2);
+
+/**
+ * @brief Lance une partie en mode "Joueur contre Ordinateur".
+ * * Gère la boucle de jeu où l'humain joue, puis l'IA répond selon son niveau.
+ * * @param humain Le joueur humain.
+ * @param difficulte Chaîne de caractères : "facile", "moyen" ou "difficile".
+ */
+void jouerPartieOrdi(Joueur * humain, char * difficulte);
+
+
+/* ============================================================================
+ * ORIDNATEURS
+ * ============================================================================ */
+
+/**
+ * @brief IA Niveau 1 : Aléatoire.
+ * Tire au hasard sur des cases non encore visées.
+ */
+void OrdiFacile(Joueur* ordi, Joueur* humain);
+
+/**
+ * @brief IA Niveau 2 : Chasseur.
+ * - Si un bateau est touché mais non coulé, cible les cases adjacentes.
+ * - Sinon, tire au hasard.
+ */
+void OrdiMoyen(Joueur* ordi, Joueur* humain);
+
+/**
+ * @brief IA Niveau 3 : Tricheur (Hardcore).
+ * Regarde directement la grille adverse pour trouver les bateaux.
+ * Ne rate jamais son coup.
+ */
+void OrdiDifficile(Joueur* ordi, Joueur* humain);
 
 #endif

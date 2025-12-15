@@ -2,42 +2,74 @@
 #include "grille.h"
 #include "bateau.h"
 
+
+/* -------------------------------------------------------------------------
+ * Initialisation de la grille
+ * On utilise malloc pour créer l'objet en mémoire dynamique.
+ * ------------------------------------------------------------------------- */
 Grille* initialiser(void)
 {
+    // 1. Allocation dynamique de la structure
     Grille* g = malloc(sizeof(Grille));
+
+    // Sécurité : toujours vérifier si l'allocation a réussi
+    if (g == NULL) {
+        return NULL;
+    }
+
+    // 2. Initialisation des cases à 0 (Eau)
     for(int i = 0; i < 10; i++){
         for(int j = 0; j < 10; j++){
             g->tab[i][j] = 0;
         }
     }
+
     return g;
 }
 
+/* -------------------------------------------------------------------------
+ * Affichage brut (Debug)
+ * Affiche juste la matrice de chiffres.
+ * ------------------------------------------------------------------------- */
 void afficher(Grille* g)
 {
     for(int i = 0; i < 10; i++){
         for(int j = 0; j < 10; j++){
             printf("%d ", g->tab[i][j]);
         }
-        printf("\n");
+        printf("\n");// Retour à la ligne après chaque rangée
     }
 }
 
-void detruireGrille(Grille* g){
+/* -------------------------------------------------------------------------
+ * Destruction de la grille
+ * Il faut libérer la mémoire allouée par malloc pour éviter les fuites.
+ * ------------------------------------------------------------------------- */
+void detruireGrille(Grille* g)
+{
     free(g);
 }
 
+/* -------------------------------------------------------------------------
+ * Affichage complet avec coordonnées
+ * Ajoute les lettres en haut et les chiffres à gauche.
+ * ------------------------------------------------------------------------- */
 void afficherCoordonnees(Grille* g)
 {
-    printf("  ");
+    // 1. Affichage de l'en-tête (Lettres A à J)
+    printf("  ");// Décalage pour aligner avec les numéros de ligne
     for(int j = 0; j < 10; j++){
         printf("%c ", 'A' + j);
     }
     printf("\n");
     
+// 2. Affichage du contenu
     for(int i = 0; i < 10; i++){
-        printf("%d ", i + 1);  
+        // Affichage du numéro de ligne (i + 1 pour avoir 1-10)
+        // %2d permet d'aligner correctement les nombres à 1 ou 2 chiffres
+        printf("%2d ", i + 1);  
         
+        // Affichage des colonnes de la ligne actuelle
         for(int j = 0; j < 10; j++){
             printf("%d ", g->tab[i][j]);
         }
@@ -45,44 +77,64 @@ void afficherCoordonnees(Grille* g)
     }
 }
 
+/* -------------------------------------------------------------------------
+ * Affichage masqué (Vue adversaire)
+ * Le joueur ne doit pas voir les bateaux (1) de l'ennemi.
+ * ------------------------------------------------------------------------- */
 void afficherMasque(Grille* g)
 {
-    // En-tête
+    // 1. En-tête (A-J)
     printf("  ");
     for(int j = 0; j < 10; j++){
         printf("%c ", 'A' + j);
     }
     printf("\n");
     
-    // Afficher ligne par ligne
+    // 2. Contenu masqué
     for(int i = 0; i < 10; i++){
-        printf("%d ", i + 1);
+        printf("%2d ", i + 1); // Numéro de ligne
+        
         for(int j = 0; j < 10; j++){
-            // MASQUER les bateaux non touchés
+            // LOGIQUE DE MASQUAGE :
+            // Si la case contient un bateau intact (1), on affiche de l'eau (0)
+            // pour ne pas tricher. Sinon, on affiche la vraie valeur (2 ou 3).
             if(g->tab[i][j] == 1){
-                printf("0 ");  // Afficher 0 au lieu de 1
+                printf("0 "); 
             } else {
-                printf("%d ", g->tab[i][j]);  // Afficher normalement
+                printf("%d ", g->tab[i][j]);
             }
         }
         printf("\n");
     }
 }
 
-int tirer(Grille* g, int ligne, int colonne){
-    if (ligne < 0 || ligne > 10 || colonne < 0 || colonne > 10){
-        return -2;
+/* -------------------------------------------------------------------------
+ * Gestion du Tir
+ * Analyse les coordonnées et modifie l'état de la grille.
+ * ------------------------------------------------------------------------- */
+int tirer(Grille* g, int ligne, int colonne)
+{
+    
+    // 1. Vérification des bornes (Sécurité)
+    if (ligne < 0 || ligne > 9 || colonne < 0 || colonne > 9){
+        return -2; // Erreur : Hors de la grille
     }
+    
+    // 2. Vérification si la case a déjà été jouée
+    // 2 = Tir manqué précédent, 3 = Bateau touché précédent
     else if (g->tab[ligne][colonne] == 2 || g->tab[ligne][colonne] == 3){
-        return -2;
+        return -1; // Erreur : Déjà tiré ici
     }
+    
+    // 3. Cas : Bateau touché !
     else if (g->tab[ligne][colonne] == 1){
-        g->tab[ligne][colonne] = 3;
-        return 1;
+        g->tab[ligne][colonne] = 3; // Mise à jour de l'état vers "Touché"
+        return 1; // Succès : Touché
     }
+    
+    // 4. Cas : Tir dans l'eau
     else {
-        g->tab[ligne][colonne] = 2;
-        return 0;
+        g->tab[ligne][colonne] = 2; // Mise à jour de l'état vers "Raté"
+        return 0; // Succès : Raté
     }
 }
-

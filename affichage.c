@@ -134,18 +134,21 @@ void NomDesJoueurs(void){
 
 void NomDuJoueur(char difficulte[15]){
     Joueur * j = creerJoueur();
+    
     printf(EFFACE);
     printf("\n======================================== \n");
-    printf(CIEL "         SELECTION DU JOUEURS" RESET);
+    printf(CIEL "         SELECTION DU JOUEUR" RESET);
     printf("\n======================================== \n");
     printf("\nEntrer le nom du joueur \n");
     printf("\nPour retourner au menu précédent, tapez " CYAN "quit \n" RESET);
     printf("\nVotre réponse : ");
     scanf(" %s",  j -> NomJoueur);
+
     if(strcmp(j -> NomJoueur, "quit") == 0){
         ChoixDifficulte();
     }
     else{
+        // Enregistrement des fichiers (Ton code existant)
         if(strcmp(difficulte, "facile") == 0){
             FILE * f = fopen("registre_facile.txt", "a+");
             if(Appartient(f, j -> NomJoueur) == 0){
@@ -167,6 +170,8 @@ void NomDuJoueur(char difficulte[15]){
             fclose(f);
             }
         }
+        
+        jouerPartieOrdi(j, difficulte);
     }
 }
 

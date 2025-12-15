@@ -62,3 +62,4 @@ void afficherMasque(Grille*);
 int tirer(Grille*, int, int);
 
 #endif
+

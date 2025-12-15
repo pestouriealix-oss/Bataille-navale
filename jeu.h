@@ -1,33 +1,32 @@
-#ifndef _JEU_H_
-#define _JEU_H_
+#ifndef _LIBRAIRIES_H_
+#define _LIBRAIRIES_H_
 
-#include "librairies.h"
+/**
+ * ============================================================================
+ * FICHIER : librairies.h
+ * ----------------------------------------------------------------------------
+ * Ce fichier agit comme un "hub" central pour toutes les bibliothèques
+ * standards du C nécessaires au projet.
+ * ============================================================================
+ */
 
-#include "grille.h"
-#include "bateau.h"
+/* --- Entrées / Sorties --- */
+#include <stdio.h>      // Indispensable pour printf(), scanf(), et la gestion des fichiers (fopen, fprintf...)
 
-typedef struct {
-    char NomJoueur[20];
-    int NbVictoire;
-    Grille* mesNavires;    // Où sont placés MES bateaux
-    Grille* mesTirs;       // Où j'ai TIRÉ sur l'adversaire
-    Bateaux* flotte;       // Mes 5 bateaux
-} Joueur;
+/* --- Gestion Mémoire et Utilitaires --- */
+#include <stdlib.h>     // Pour l'allocation dynamique (malloc, free) et l'aléatoire (rand, srand)
+#include <stddef.h>     // Pour la définition de NULL et size_t
 
-// === Gestion des joueurs ===
-Joueur* creerJoueur(void);
-void detruireJoueur(Joueur* j);
+/* --- Manipulation de Données --- */
+#include <string.h>     // Pour manipuler les noms des joueurs et commandes (strcpy, strcmp, strlen)
+#include <stdint.h>     // Pour des types d'entiers précis (int8_t, int32_t) - Bonnes pratiques
+#include <stdbool.h>    // Pour utiliser les types booléens (bool, true, false) au lieu de 0 et 1
 
-// === Phase de préparation ===
-void phasePreparation(Joueur* j);
+/* --- Mathématiques et Temps --- */
+#include <math.h>       // Fonctions mathématiques (si besoin de calculs complexes)
+#include <time.h>       // Pour time(), essentiel pour initialiser le générateur aléatoire (srand)
 
-// === Déroulement du jeu ===
-void tourJoueur(Joueur* attaquant, Joueur* defenseur);
-int verifierVictoire(Joueur* j);
-void afficherPlateau(Joueur* j);
-
-// === Fonction principale ===
-void jouerPartie(Joueur * joueur1, Joueur * joueur2);
+/* --- Débogage --- */
+#include <assert.h>     // Pour utiliser assert() lors du développement (vérifier des conditions critiques)
 
 #endif
-

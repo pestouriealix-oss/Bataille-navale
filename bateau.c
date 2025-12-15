@@ -231,3 +231,4 @@ int trouverBateau(Bateaux* flotte, int ligne, int colonne)
     
     return -1;  // Aucun bateau à cette position
 }
+

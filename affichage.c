@@ -1,4 +1,5 @@
 #include"affichage.h"
+#include"jeu.h"
 
 void MenuPrincipal(void){
     char reponse[15];
@@ -92,8 +93,8 @@ void Classement(void){
 }
 
 void NomDesJoueurs(void){
-    Joueur j1;
-    Joueur j2;
+    Joueur * j1 = creerJoueur();
+    Joueur * j2 = creerJoueur();
     printf(EFFACE);
     printf("\n======================================== \n");
     printf(CIEL "         SELECTION DES JOUEURS" RESET);
@@ -101,8 +102,8 @@ void NomDesJoueurs(void){
     printf("\nEntrer le nom du premier joueur \n");
     printf("\nPour retourner au menu précédent, tapez " CYAN "quit \n" RESET);
     printf("\nVotre réponse : ");
-    scanf(" %s", j1.NomJoueur);
-    if(strcmp(j1.NomJoueur, "quit") == 0){
+    scanf(" %s", j1 -> NomJoueur);
+    if(strcmp(j1 -> NomJoueur, "quit") == 0){
         ModeDeJeu();
     }
     else{
@@ -113,25 +114,26 @@ void NomDesJoueurs(void){
         printf("\nEntrer le nom du deuxième joueur \n");
         printf("\nPour retourner au menu précédent, tapez " CYAN "quit \n" RESET);
         printf("\nVotre réponse : ");
-        scanf(" %s", j2.NomJoueur);
-        if(strcmp(j2.NomJoueur, "quit") == 0){
+        scanf(" %s", j2 -> NomJoueur);
+        if(strcmp(j2 -> NomJoueur, "quit") == 0){
             ModeDeJeu();
         }
         else{
             FILE * f = fopen("registre_1c1.txt", "a+");
-            if(Appartient(f, j1) == 0){
-                fprintf(f,"%s %d \n", j1.NomJoueur, 0);
+            if(Appartient(f, j1 -> NomJoueur) == 0){
+                fprintf(f,"%s %d \n", j1 -> NomJoueur, 0);
             }
-            if(Appartient(f, j2) == 0){
-                fprintf(f,"%s %d \n", j2.NomJoueur, 0);
+            if(Appartient(f, j2 -> NomJoueur) == 0){
+                fprintf(f,"%s %d \n", j2 -> NomJoueur, 0);
             }
             fclose(f);
         }
     }
+    jouerPartie(j1, j2);
 }
 
 void NomDuJoueur(char difficulte[15]){
-    Joueur j;
+    Joueur * j = creerJoueur();
     printf(EFFACE);
     printf("\n======================================== \n");
     printf(CIEL "         SELECTION DU JOUEURS" RESET);
@@ -139,51 +141,38 @@ void NomDuJoueur(char difficulte[15]){
     printf("\nEntrer le nom du joueur \n");
     printf("\nPour retourner au menu précédent, tapez " CYAN "quit \n" RESET);
     printf("\nVotre réponse : ");
-    scanf(" %s",  j.NomJoueur);
-    if(strcmp(j.NomJoueur, "quit") == 0){
+    scanf(" %s",  j -> NomJoueur);
+    if(strcmp(j -> NomJoueur, "quit") == 0){
         ChoixDifficulte();
     }
     else{
         if(strcmp(difficulte, "facile") == 0){
             FILE * f = fopen("registre_facile.txt", "a+");
-            if(Appartient(f, j) == 0){
-            fprintf(f,"%s %d \n", j.NomJoueur, 0);
+            if(Appartient(f, j -> NomJoueur) == 0){
+            fprintf(f,"%s %d \n", j -> NomJoueur, 0);
             fclose(f);
             }
         }
         if(strcmp(difficulte, "moyen") == 0){
             FILE * f = fopen("registre_moyen.txt", "a+");
-            if(Appartient(f, j) == 0){
-            fprintf(f,"%s %d \n", j.NomJoueur, 0);
+            if(Appartient(f, j -> NomJoueur) == 0){
+            fprintf(f,"%s %d \n", j -> NomJoueur, 0);
             fclose(f);
             }
         }
         if(strcmp(difficulte, "difficile") == 0){
             FILE * f = fopen("registre_difficile.txt", "a+");
-            if(Appartient(f, j) == 0){
-            fprintf(f,"%s %d \n", j.NomJoueur, 0);
+            if(Appartient(f, j -> NomJoueur) == 0){
+            fprintf(f,"%s %d \n", j -> NomJoueur, 0);
             fclose(f);
             }
         }
     }
 }
 
-void AjouterVictoireOrdi(FILE * f, Joueur j, char difficulte[15]){
+void AjouterVictoireOrdi(Joueur * j, char difficulte[15]){
     char NomRegistre[30];
-    FILE * fichiertemporaire = fopen("registretemporaire.txt", "w");
-    Joueur joueurtemporaire;
-    rewind(f);
-    while(fscanf(f, "%s %d", joueurtemporaire.NomJoueur, &joueurtemporaire.NbVictoire) == 2){
-        if(strcmp(joueurtemporaire.NomJoueur, j.NomJoueur) == 0){
-            joueurtemporaire.NbVictoire += 1;
-            fprintf(fichiertemporaire, "%s %d \n", joueurtemporaire.NomJoueur, joueurtemporaire.NbVictoire);
-        }
-        else{
-            fprintf(fichiertemporaire, "%s %d \n", joueurtemporaire.NomJoueur, joueurtemporaire.NbVictoire);
-        }
-    }
-    fclose(fichiertemporaire);
-    if(strcmp(difficulte, "facile") == 0){
+     if(strcmp(difficulte, "facile") == 0){
         strcpy(NomRegistre, "registre_facile.txt");
     }
     if(strcmp(difficulte, "moyen") == 0){
@@ -192,16 +181,12 @@ void AjouterVictoireOrdi(FILE * f, Joueur j, char difficulte[15]){
     if(strcmp(difficulte, "difficile") == 0){
         strcpy(NomRegistre, "registre_difficile.txt");
     }
-    remove(NomRegistre);
-    rename("registretemporaire.txt", NomRegistre);
-}
-
-void AjouterVictoire1c1(FILE * f, Joueur j){
+    FILE * f = fopen(NomRegistre, "r");
     FILE * fichiertemporaire = fopen("registretemporaire.txt", "w");
     Joueur joueurtemporaire;
     rewind(f);
     while(fscanf(f, "%s %d", joueurtemporaire.NomJoueur, &joueurtemporaire.NbVictoire) == 2){
-        if(strcmp(joueurtemporaire.NomJoueur, j.NomJoueur) == 0){
+        if(strcmp(joueurtemporaire.NomJoueur, j -> NomJoueur) == 0){
             joueurtemporaire.NbVictoire += 1;
             fprintf(fichiertemporaire, "%s %d \n", joueurtemporaire.NomJoueur, joueurtemporaire.NbVictoire);
         }
@@ -209,6 +194,27 @@ void AjouterVictoire1c1(FILE * f, Joueur j){
             fprintf(fichiertemporaire, "%s %d \n", joueurtemporaire.NomJoueur, joueurtemporaire.NbVictoire);
         }
     }
+    fclose(f);
+    fclose(fichiertemporaire);
+    remove(NomRegistre);
+    rename("registretemporaire.txt", NomRegistre);
+}
+
+void AjouterVictoire1c1(Joueur * j){
+    FILE * f = fopen("registre_1c1.txt", "r");
+    FILE * fichiertemporaire = fopen("registretemporaire.txt", "w");
+    Joueur joueurtemporaire;
+    rewind(f);
+    while(fscanf(f, "%s %d", joueurtemporaire.NomJoueur, &joueurtemporaire.NbVictoire) == 2){
+        if(strcmp(joueurtemporaire.NomJoueur, j -> NomJoueur) == 0){
+            joueurtemporaire.NbVictoire += 1;
+            fprintf(fichiertemporaire, "%s %d \n", joueurtemporaire.NomJoueur, joueurtemporaire.NbVictoire);
+        }
+        else{
+            fprintf(fichiertemporaire, "%s %d \n", joueurtemporaire.NomJoueur, joueurtemporaire.NbVictoire);
+        }
+    }
+    fclose(f);
     fclose(fichiertemporaire);
     remove("registre_1c1.txt");
     rename("registretemporaire.txt", "registre_1c1.txt");
@@ -281,12 +287,12 @@ void AfficherClassement(FILE * f){
     }
 }
 
-void MenuFinDePartie(Joueur j){
+void MenuFinDePartie(Joueur * j){
     char reponse[15];
     while((strcmp(reponse, "quit") != 0) && (strcmp(reponse, "stat") != 0)){
         printf(EFFACE);
         printf("\n======================================== \n");
-        printf(CIEL "           Victoire de %s" RESET, j.NomJoueur);
+        printf(CIEL "           Victoire de %s" RESET, j -> NomJoueur);
         printf("\n======================================== \n");
         printf("\nPour redémarrer une partie, tapez " CYAN "play" RESET);
         printf("\nPour visualiser les statistiques de la partie, tapez " CYAN "stat" RESET);
@@ -377,15 +383,16 @@ void ClassementOrdi(char difficulte[15]){
     ChoixClassementOrdi();
 }
 
-int Appartient(FILE * f, Joueur j){
+int Appartient(FILE * f, char NomJoueur[]){
     int v = 0;
     Joueur temporaire;
     rewind(f);
     while(fscanf(f, "%s %d", temporaire.NomJoueur, &temporaire.NbVictoire) == 2){
-        if(strcmp(temporaire.NomJoueur, j.NomJoueur) == 0){
+        if(strcmp(temporaire.NomJoueur, NomJoueur) == 0){
             v = 1;
             break;
         }
     }
     return v;
 }
+

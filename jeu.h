@@ -3,7 +3,9 @@
 
 #include "librairies.h"
 #include "grille.h"
-#include "bateau.h"
+
+typedef struct bateaux Bateaux;
+
 
 /**
  * ============================================================================
@@ -20,7 +22,7 @@
  * On y note nos tirs (2=Raté, 3=Touché) pour se souvenir où on a tiré.
  * ============================================================================
  */
-typedef struct {
+typedef struct joueur {
     char NomJoueur[20];    // Pseudo du joueur
     int NbVictoire;        // Compteur de victoires (pour le classement)
     Grille* mesNavires;    // Ma grille avec mes bateaux (Vue complète)
@@ -76,7 +78,9 @@ int phasePreparation(Joueur* j);
  * 0 : Le tour s'est bien passé.
  * 1 : Le joueur veut QUITTER la partie (a tapé -1).
  */
-int tourJoueur(Joueur* attaquant, Joueur* defenseur);
+int tourJoueur1vs1(Joueur* attaquant, Joueur* defenseur);
+
+int tourJoueurOrdi(Joueur* attaquant, Joueur* defenseur);
 
 /**
  * @brief Vérifie si un joueur a perdu (toute sa flotte est coulée).
@@ -90,7 +94,9 @@ int verifierVictoire(Joueur* j);
  * * Affiche "MES NAVIRES" (Grille complète) et "MES TIRS" (Grille masquée).
  * * @param j Le joueur dont on affiche les infos.
  */
-void afficherPlateau(Joueur* j);
+void afficherPlateauOrdi(Joueur* j);
+
+void afficherPlateau1vs1(Joueur* j);
 
 
 

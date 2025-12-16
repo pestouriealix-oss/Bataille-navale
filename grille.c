@@ -1,6 +1,7 @@
 #include "librairies.h"
 #include "grille.h"
 #include "bateau.h"
+#include"affichage.h"
 
 
 /* -------------------------------------------------------------------------
@@ -56,24 +57,32 @@ void detruireGrille(Grille* g)
  * ------------------------------------------------------------------------- */
 void afficherCoordonnees(Grille* g)
 {
-    // 1. Affichage de l'en-tête (Lettres A à J)
-    printf("  ");// Décalage pour aligner avec les numéros de ligne
-    for(int j = 0; j < 10; j++){
-        printf("%c ", 'A' + j);
-    }
-    printf("\n");
+    // En-tête avec les colonnes
+    printf("\n     A   B   C   D   E   F   G   H   I   J\n");
+    printf("   +---+---+---+---+---+---+---+---+---+---+\n");
     
-// 2. Affichage du contenu
     for(int i = 0; i < 10; i++){
-        // Affichage du numéro de ligne (i + 1 pour avoir 1-10)
-        // %2d permet d'aligner correctement les nombres à 1 ou 2 chiffres
-        printf("%2d ", i + 1);  
+        // Numéro de ligne (aligné à droite pour 10)
+        printf("%2d |", i + 1);
         
-        // Affichage des colonnes de la ligne actuelle
         for(int j = 0; j < 10; j++){
-            printf("%d ", g->tab[i][j]);
+            int valeur = g->tab[i][j];
+            
+            // Affichage selon la valeur
+            if (valeur == 0) {
+                printf(" ~ |");  // Eau
+            } else if (valeur == 1) {
+                printf(VERT " ■ " RESET "|");  // Bateau
+            } else if (valeur == 2) {
+                printf(ROUGE " X " RESET "|");  // Touché
+            } else if (valeur == 3) {
+                printf(CYAN " O " RESET "|");  // Raté
+            } else {
+                printf(" %d |", valeur);  // Autre valeur
+            }
         }
-        printf("\n");
+        
+        printf("\n   +---+---+---+---+---+---+---+---+---+---+\n");
     }
 }
 

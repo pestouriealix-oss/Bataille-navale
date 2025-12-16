@@ -92,17 +92,7 @@ int verifierVictoire(Joueur* j);
  */
 void afficherPlateau(Joueur* j);
 
-/**
- * @brief Place aléatoirement toute la flotte d'un joueur sur sa grille.
- * * Cette fonction génère des coordonnées et des orientations au hasard
- * pour les 5 bateaux du joueur. Elle garantit :
- * - Que les bateaux ne sortent pas de la grille (limites 0-9).
- * - Que les bateaux ne se chevauchent pas (pas de collisions).
- * * Utile pour l'Intelligence Artificielle ou pour un placement rapide ("Shuffle")
- * pour un joueur humain.
- * * @param j Pointeur vers le joueur dont on veut placer la flotte.
- */
-void placerBateauxAleatoire(Joueur* j);
+
 
 
 /* ============================================================================

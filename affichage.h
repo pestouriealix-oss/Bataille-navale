@@ -12,6 +12,8 @@
 #define BLEUGRIS "\033[38;5;67m"
 #define CYAN "\033[38;5;51m"
 #define EFFACE "\033[2J\033[H"
+#define ROUGE  "\033[38;5;196m"
+#define VERT   "\033[38;5;46m"
 
 void MenuPrincipal(void);
 void ReglesDuJeu(void);

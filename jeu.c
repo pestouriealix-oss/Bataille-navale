@@ -55,18 +55,18 @@ void detruireJoueur(Joueur* j)
 int phasePreparation(Joueur* j) 
 {
     char reponse[15];
-    while((strcmp(reponse, "aleatoirement") != 0) && (strcmp(reponse, "non") != 0)){
+    while((strcmp(reponse, "random") != 0) && (strcmp(reponse, "non") != 0)){
         printf(EFFACE); // Nettoie le terminal
     printf("\n");
     printf("========================================\n");
     printf(CIEL "       %s, placez vos bateaux !\n" RESET, j->NomJoueur);
     printf("========================================\n");
-    printf("Pour placer les bateaux aléatoirement, tapez :" CYAN "aleatoirement" RESET);
-    printf("Sinon, tapez " CYAN "non" RESET);
-    printf("Votre reponse : ");
+    printf("\nPour placer les bateaux aléatoirement, tapez :" CYAN "random" RESET);
+    printf("\nSinon, tapez " CYAN "non" RESET);
+    printf("\n\nVotre reponse : ");
     scanf(" %s", reponse);
     }
-    if(strcmp(reponse, "aleatoirement") == 0){
+    if(strcmp(reponse, "random") == 0){
         placerBateauxAleatoire(j);
     }
     else{
@@ -107,11 +107,17 @@ int phasePreparation(Joueur* j)
  * Affichage du plateau de jeu complet
  * Montre la vue stratégique du joueur : ses navires et ses tirs passés.
  * ------------------------------------------------------------------------- */
-void afficherPlateau(Joueur* j)
+void afficherPlateauOrdi(Joueur* j)
 {
     printf("\n=== MES NAVIRES ===\n");
     afficherCoordonnees(j->mesNavires);
     
+    printf("\n=== MES TIRS ===\n");
+    afficherCoordonnees(j->mesTirs);
+}
+
+void afficherPlateau1vs1(Joueur* j)
+{   
     printf("\n=== MES TIRS ===\n");
     afficherCoordonnees(j->mesTirs);
 }
@@ -127,7 +133,7 @@ void afficherPlateau(Joueur* j)
  * Gère la saisie, le tir, et le retour d'information (Touché/Coulé).
  * Retourne 1 si le joueur veut quitter, 0 sinon.
  * ------------------------------------------------------------------------- */
-int tourJoueur(Joueur* attaquant, Joueur* defenseur)
+int tourJoueur1vs1(Joueur* attaquant, Joueur* defenseur)
 {
     int ligne, colonne;
     char conversion;
@@ -138,7 +144,98 @@ int tourJoueur(Joueur* attaquant, Joueur* defenseur)
     printf(BLEUGRIS "              Tour de %s\n" RESET, attaquant->NomJoueur);
     printf("========================================\n");
     
-    afficherPlateau(attaquant);
+    afficherPlateau1vs1(attaquant);
+    
+    // Boucle de saisie des coordonnées (jusqu'à avoir un tir valide ou un quit)
+    while (1) {
+        // --- 2. Saisie de la colonne ---
+        char buffer[10]; // On crée une boite pour stocker du texte
+        
+        printf("Entrez la colonne (A-J) : ");
+        scanf("%s", buffer); // On lit tout le texte (ex: "A", "b" ou "-1")
+
+        // GESTION DU QUIT : On compare le texte avec "-1"
+        // (strcmp renvoie 0 si les deux textes sont identiques)
+        if (strcmp(buffer, "-1") == 0) {
+            // Pas besoin de vider le buffer ici car scanf("%s") a tout mangé
+            return 1; 
+        }
+
+        // Si ce n'est pas "-1", on prend juste la première lettre
+        conversion = buffer[0];
+        
+        printf("\nEntrez la ligne (ou -1 pour quitter) : ");
+        scanf("%d", &ligne);
+
+        // --- GESTION DU QUIT ---
+        if (ligne == -1) {
+            printf("🏳️  Vous abandonnez la partie...\n");
+            return 1; // On renvoie 1 pour dire "STOP"
+        }
+
+        // Convertir de 1-10 à 0-9
+        ligne = ligne - 1;
+        colonne = conversion - 65;
+
+
+        
+        // Tentative de tir sur la grille adverse
+        resultat = tirer(defenseur->mesNavires, ligne, colonne);
+        
+        // Gestion des erreurs de tir
+        if (resultat == -2) {
+            printf("❌ Hors de la grille ! Réessayez.\n");
+            continue;
+        }
+        
+        if (resultat == -1) {
+            printf("❌ Vous avez déjà tiré ici ! Réessayez.\n");
+            continue;
+        }
+        
+        break; // Tir valide, on sort de la boucle de saisie
+    }
+    
+    // MISE A JOUR DE LA CARTE DES TIRS DE L'ATTAQUANT
+    // L'attaquant note le résultat sur sa propre carte pour s'en souvenir
+    attaquant->mesTirs->tab[ligne][colonne] = defenseur->mesNavires->tab[ligne][colonne];
+    
+    if (resultat == 0) {
+        printf("\n💦 PLOUF ! Dans l'eau...\n");
+    } else if (resultat == 1) {
+        printf("\n💥 TOUCHÉ !\n");
+
+        // Important : On doit trouver QUEL bateau a été touché pour gérer ses PV
+        int index = trouverBateau(defenseur->flotte, ligne, colonne);
+        if (index != -1) {
+            enregistrerTouche(&defenseur->flotte[index]);
+
+            // Si les PV tombent à 0 (touches == taille)
+            if (estCoule(&defenseur->flotte[index])) {
+                printf("🚢 COULÉ ! Vous avez coulé le %s !\n", defenseur->flotte[index].nom);
+            }
+        }
+    }
+    
+    printf("\nAppuyez sur Entrée pour continuer...");
+    getchar();
+    getchar(); // Double getchar souvent nécessaire après scanf pour vider le buffer
+
+    return 0; // Le tour s'est bien passé (0 = Continue)
+}
+
+int tourJoueurOrdi(Joueur* attaquant, Joueur* defenseur)
+{
+    int ligne, colonne;
+    char conversion;
+    int resultat;
+    
+    printf("\n");
+    printf("========================================\n");
+    printf(BLEUGRIS "              Tour de %s\n" RESET, attaquant->NomJoueur);
+    printf("========================================\n");
+    
+    afficherPlateauOrdi(attaquant);
     
     // Boucle de saisie des coordonnées (jusqu'à avoir un tir valide ou un quit)
     while (1) {
@@ -282,7 +379,7 @@ void jouerPartie(Joueur * joueur1, Joueur * joueur2)
 
         
         // --- TOUR JOUEUR 1 ---
-        stop = tourJoueur(joueur1, joueur2); // On récupère le résultat
+        stop = tourJoueur1vs1(joueur1, joueur2); // On récupère le résultat
         if (stop == 1) break; // Si J1 veut quitter, on casse la boucle
         
         if (verifierVictoire(joueur2)) {
@@ -298,7 +395,7 @@ void jouerPartie(Joueur * joueur1, Joueur * joueur2)
 
         
         // --- TOUR JOUEUR 2 ---
-        stop = tourJoueur(joueur2, joueur1); // On récupère le résultat
+        stop = tourJoueur1vs1(joueur2, joueur1); // On récupère le résultat
         if (stop == 1) break; // Si J2 veut quitter
         
         if (verifierVictoire(joueur1)) {
@@ -434,7 +531,7 @@ void OrdiMoyen(Joueur* ordi, Joueur* humain) {
                             colonne = testC;
                             trouveCibleIntelligente = 1;
                             
-                            // On sort des boucles (goto est mal vu, on utilise des breaks)
+                            // On sort des boucles 
                             goto fin_recherche; 
                         }
                     }
@@ -576,7 +673,7 @@ void jouerPartieOrdi(Joueur * humain, char * difficulte) {
         printf("\n=== TOUR %d ===\n", tourNumero);
 
         // --- Tour de l'Humain ---
-        stop = tourJoueur(humain, ordi); // On capture le retour
+        stop = tourJoueurOrdi(humain, ordi); // On capture le retour
         if (stop == 1) break; // ON QUITTE SI -1
         
         if (verifierVictoire(ordi)) {
@@ -588,7 +685,7 @@ void jouerPartieOrdi(Joueur * humain, char * difficulte) {
         printf("\n--- Tour de l'Ordinateur ---\n");
         // Sélection de l'Ordi selon la difficulté
         if (strcmp(difficulte, "facile") == 0) OrdiFacile(ordi, humain);
-        //else if (strcmp(difficulte, "moyen") == 0) OrdiMoyen(ordi, humain);
+        else if (strcmp(difficulte, "moyen") == 0) OrdiMoyen(ordi, humain);
         else OrdiDifficile(ordi, humain);
         
         printf("\nAppuyez sur Entrée pour continuer...");

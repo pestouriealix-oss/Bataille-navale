@@ -74,9 +74,9 @@ void afficherCoordonnees(Grille* g)
             } else if (valeur == 1) {
                 printf(VERT " ■ " RESET "|");  // Bateau
             } else if (valeur == 2) {
-                printf(ROUGE " X " RESET "|");  // Touché
+                printf(CIEL " ~ " RESET "|");  // Raté
             } else if (valeur == 3) {
-                printf(CYAN " O " RESET "|");  // Raté
+                printf(ROUGE " X " RESET "|");   // Touché
             } else {
                 printf(" %d |", valeur);  // Autre valeur
             }

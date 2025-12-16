@@ -102,6 +102,7 @@ void detruireBateaux(Bateaux* b)
 int positionnerBateau(Bateaux* b, Grille* g)
 {
     int ligne, colonne;
+    char conversion;
     char orientation;
 
     // Boucle infinie : on ne sort que si le placement est valide ou si abandon
@@ -109,6 +110,22 @@ int positionnerBateau(Bateaux* b, Grille* g)
     {
         printf("\n--- Placement du %s (Taille %d) ---\n", b->nom, b->taille);
         
+        // --- 2. Saisie de la colonne ---
+        char buffer[10]; // On crée une boite pour stocker du texte
+        
+        printf("Entrez la colonne (A-J) ou '-1' pour quitter : ");
+        scanf("%s", buffer); // On lit tout le texte (ex: "A", "b" ou "-1")
+
+        // GESTION DU QUIT : On compare le texte avec "-1"
+        // (strcmp renvoie 0 si les deux textes sont identiques)
+        if (strcmp(buffer, "-1") == 0) {
+            // Pas besoin de vider le buffer ici car scanf("%s") a tout mangé
+            return 0; // Code 0 = Annulation (IMPORTANT : 0, pas 1 !)
+        }
+
+        // Si ce n'est pas "-1", on prend juste la première lettre
+        conversion = buffer[0];
+
         // --- 1. Saisie de la ligne ---
         printf("Entrez la ligne (1-10) ou '-1' pour quitter : ");
         scanf("%d", &ligne);
@@ -120,10 +137,6 @@ int positionnerBateau(Bateaux* b, Grille* g)
             while ((c = getchar()) != '\n' && c != EOF);
             return 0; // Code de retour 0 = Annulation
         }
-        
-        // --- 2. Saisie de la colonne ---
-        printf("Entrez la colonne (1-10) : ");
-        scanf("%d", &colonne);
 
         // --- 3. Saisie de l'orientation ---
         printf("Orientation (H/V) : ");
@@ -137,10 +150,15 @@ int positionnerBateau(Bateaux* b, Grille* g)
         // Normalisation : Accepter minuscules et convertir en majuscules
         if (orientation == 'h') orientation = 'H';
         if (orientation == 'v') orientation = 'V';
+
+        if(conversion >= 'a' && conversion <= 'j' )
+        {
+            conversion = conversion - 32;
+        }
         
         // CONVERSION COORDONNÉES : Humain (1-10) -> Machine (0-9)
         ligne = ligne - 1;
-        colonne = colonne - 1;
+        colonne = conversion - 65;
 
         // --- 4. VALIDATION ---
         

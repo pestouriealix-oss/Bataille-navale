@@ -3,7 +3,8 @@
 
 #include "librairies.h"
 #include "grille.h"
-#include"jeu.h"
+
+typedef struct joueur Joueur;
 
 
 /**

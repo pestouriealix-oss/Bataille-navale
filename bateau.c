@@ -1,6 +1,8 @@
 #include "librairies.h"
 #include "grille.h"
+#include"jeu.h"
 #include "bateau.h"
+
 
 /* ============================================================================
  * INITIALISATION ET MÉMOIRE
@@ -206,6 +208,68 @@ int positionnerBateau(Bateaux* b, Grille* g)
 
         printf("✅ %s placé avec succès !\n", b->nom);
         return 1; // Code de retour 1 = Succès
+    }
+}
+
+
+/* =========================================================
+ * Fonction : placerBateauxAleatoire
+ * ---------------------------------------------------------
+ * Place automatiquement toute la flotte d'un joueur 
+ * à des positions aléatoires valides (sans chevauchement).
+ * ========================================================= */
+void placerBateauxAleatoire(Joueur* j) {
+    int ligne, colonne, direction;
+    char orientation;
+    int valide;
+
+    // On parcourt chaque bateau de la flotte
+    for (int i = 0; i < NB_BATEAUX; i++) {
+        valide = 0; // Le bateau n'est pas encore placé
+
+        // On boucle TANT QUE on n'a pas trouvé une position valide
+        while (!valide) {
+            // 1. Génération aléatoire
+            ligne = rand() % 10;     // 0 à 9
+            colonne = rand() % 10;   // 0 à 9
+            direction = rand() % 2;  // 0 ou 1
+            
+            if (direction == 0) orientation = 'H';
+            else orientation = 'V';
+
+            // 2. Vérification : Est-ce que ça rentre dans la grille ?
+            if (orientation == 'H' && (colonne + j->flotte[i].taille > 10)) continue;
+            if (orientation == 'V' && (ligne + j->flotte[i].taille > 10)) continue;
+
+            // 3. Vérification : Est-ce qu'il y a une collision ?
+            int collision = 0;
+            for (int k = 0; k < j->flotte[i].taille; k++) {
+                if (orientation == 'H') {
+                    if (j->mesNavires->tab[ligne][colonne + k] == 1) collision = 1;
+                } else {
+                    if (j->mesNavires->tab[ligne + k][colonne] == 1) collision = 1;
+                }
+            }
+
+            // Si collision, on recommence la boucle while
+            if (collision == 1) continue;
+
+            // 4. Si tout est bon : On place le bateau !
+            for (int k = 0; k < j->flotte[i].taille; k++) {
+                if (orientation == 'H') {
+                    j->mesNavires->tab[ligne][colonne + k] = 1;
+                } else {
+                    j->mesNavires->tab[ligne + k][colonne] = 1;
+                }
+            }
+
+            // On sauvegarde les infos dans la structure du bateau
+            j->flotte[i].ligne = ligne;
+            j->flotte[i].colonne = colonne;
+            j->flotte[i].orientation = orientation;
+            
+            valide = 1; // On peut passer au bateau suivant
+        }
     }
 }
 

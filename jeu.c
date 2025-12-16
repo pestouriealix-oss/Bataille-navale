@@ -169,6 +169,7 @@ void placerBateauxAleatoire(Joueur* j) {
 int tourJoueur(Joueur* attaquant, Joueur* defenseur)
 {
     int ligne, colonne;
+    char conversion;
     int resultat;
     
     printf("\n");
@@ -180,6 +181,22 @@ int tourJoueur(Joueur* attaquant, Joueur* defenseur)
     
     // Boucle de saisie des coordonnées (jusqu'à avoir un tir valide ou un quit)
     while (1) {
+        // --- 2. Saisie de la colonne ---
+        char buffer[10]; // On crée une boite pour stocker du texte
+        
+        printf("Entrez la colonne (A-J) : ");
+        scanf("%s", buffer); // On lit tout le texte (ex: "A", "b" ou "-1")
+
+        // GESTION DU QUIT : On compare le texte avec "-1"
+        // (strcmp renvoie 0 si les deux textes sont identiques)
+        if (strcmp(buffer, "-1") == 0) {
+            // Pas besoin de vider le buffer ici car scanf("%s") a tout mangé
+            return 1; 
+        }
+
+        // Si ce n'est pas "-1", on prend juste la première lettre
+        conversion = buffer[0];
+        
         printf("\nEntrez la ligne (ou -1 pour quitter) : ");
         scanf("%d", &ligne);
 
@@ -189,12 +206,11 @@ int tourJoueur(Joueur* attaquant, Joueur* defenseur)
             return 1; // On renvoie 1 pour dire "STOP"
         }
 
-        printf("Entrez la colonne : ");
-        scanf("%d", &colonne);
-        
         // Convertir de 1-10 à 0-9
         ligne = ligne - 1;
-        colonne = colonne - 1;
+        colonne = conversion - 65;
+
+
         
         // Tentative de tir sur la grille adverse
         resultat = tirer(defenseur->mesNavires, ligne, colonne);
@@ -352,7 +368,7 @@ void jouerPartie(Joueur * joueur1, Joueur * joueur2)
 }
 
 /* ============================================================================
- * INTELLIGENCE ARTIFICIELLE (ORDINATEUR)
+ * ORDINATEUR
  * ============================================================================ */
 
 /* -------------------------------------------------------------------------
@@ -422,7 +438,7 @@ void OrdiFacile(Joueur* ordi, Joueur* humain)
  * 2. Si trouvé, tire sur les cases adjacentes (Haut/Bas/Gauche/Droite).
  * 3. Sinon, tire au hasard.
  * ------------------------------------------------------------------------- */
-/*void OrdiMoyen(Joueur* ordi, Joueur* humain) {
+void OrdiMoyen(Joueur* ordi, Joueur* humain) {
     int ligne = -1, colonne = -1;
     int resultat;
     int trouveCibleIntelligente = 0;
@@ -501,7 +517,7 @@ void OrdiFacile(Joueur* ordi, Joueur* humain)
         printf("💦 PLOUF ! L'Ordi a raté.\n");
         ordi->mesTirs->tab[ligne][colonne] = 2;
     }
-}*/
+}
 
 /* -------------------------------------------------------------------------
  * OrdiDifficile : Mode Tricheur

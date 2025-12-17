@@ -4,10 +4,7 @@
 #include"affichage.h"
 
 
-/* -------------------------------------------------------------------------
- * Initialisation de la grille
- * On utilise malloc pour créer l'objet en mémoire dynamique.
- * ------------------------------------------------------------------------- */
+
 Grille* initialiser(void)
 {
     // 1. Allocation dynamique de la structure
@@ -28,10 +25,7 @@ Grille* initialiser(void)
     return g;
 }
 
-/* -------------------------------------------------------------------------
- * Affichage brut (Debug)
- * Affiche juste la matrice de chiffres.
- * ------------------------------------------------------------------------- */
+
 void afficher(Grille* g)
 {
     for(int i = 0; i < 10; i++){
@@ -42,19 +36,13 @@ void afficher(Grille* g)
     }
 }
 
-/* -------------------------------------------------------------------------
- * Destruction de la grille
- * Il faut libérer la mémoire allouée par malloc pour éviter les fuites.
- * ------------------------------------------------------------------------- */
+
 void detruireGrille(Grille* g)
 {
     free(g);
 }
 
-/* -------------------------------------------------------------------------
- * Affichage complet avec coordonnées
- * Ajoute les lettres en haut et les chiffres à gauche.
- * ------------------------------------------------------------------------- */
+
 void afficherCoordonnees(Grille* g)
 {
     // En-tête avec les colonnes
@@ -86,10 +74,6 @@ void afficherCoordonnees(Grille* g)
     }
 }
 
-/* -------------------------------------------------------------------------
- * Affichage masqué (Vue adversaire)
- * Le joueur ne doit pas voir les bateaux (1) de l'ennemi.
- * ------------------------------------------------------------------------- */
 void afficherMasque(Grille* g)
 {
     // 1. En-tête (A-J)
@@ -117,10 +101,7 @@ void afficherMasque(Grille* g)
     }
 }
 
-/* -------------------------------------------------------------------------
- * Gestion du Tir
- * Analyse les coordonnées et modifie l'état de la grille.
- * ------------------------------------------------------------------------- */
+
 int tirer(Grille* g, int ligne, int colonne)
 {
     

@@ -8,11 +8,7 @@
  * INITIALISATION ET MÉMOIRE
  * ============================================================================ */
 
-/* -------------------------------------------------------------------------
- * Création de la flotte standard
- * Alloue un tableau de 5 bateaux et configure leurs caractéristiques
- * selon les règles classiques de la Bataille Navale.
- * ------------------------------------------------------------------------- */
+
 Bateaux* creerFlotte(void)
 {
     // 1. Allocation du tableau pour 5 structures Bateaux
@@ -51,10 +47,7 @@ Bateaux* creerFlotte(void)
     return flotte;
 }
 
-/* -------------------------------------------------------------------------
- * Destruction de la flotte
- * Libère la mémoire du tableau complet.
- * ------------------------------------------------------------------------- */
+
 void detruireFlotte (Bateaux* flotte)
 {
     if (flotte != NULL) {
@@ -62,10 +55,7 @@ void detruireFlotte (Bateaux* flotte)
     }
 }
 
-/* -------------------------------------------------------------------------
- * Création d'un bateau unique (Utilitaire)
- * Utile pour des tests unitaires ou des variantes du jeu.
- * ------------------------------------------------------------------------- */
+
 Bateaux* creerBateaux(void)
 {
     Bateaux* b = malloc(sizeof(Bateaux));
@@ -80,9 +70,7 @@ Bateaux* creerBateaux(void)
     return b;
 }
 
-/* -------------------------------------------------------------------------
- * Destruction d'un bateau unique
- * ------------------------------------------------------------------------- */
+
 void detruireBateaux(Bateaux* b)
 {
     if (b != NULL) {
@@ -95,12 +83,7 @@ void detruireBateaux(Bateaux* b)
  * PLACEMENT ET INTERACTION
  * ============================================================================ */
 
-/* -------------------------------------------------------------------------
- * Positionner un bateau
- * Gère tout le dialogue avec l'utilisateur pour placer un navire.
- * Contient la validation des coordonnées, la gestion des erreurs et
- * la mise à jour de la grille.
- * ------------------------------------------------------------------------- */
+
 int positionnerBateau(Bateaux* b, Grille* g)
 {
     int ligne, colonne;
@@ -115,7 +98,7 @@ int positionnerBateau(Bateaux* b, Grille* g)
         // --- 2. Saisie de la colonne ---
         char buffer[10]; // On crée une boite pour stocker du texte
         
-        printf("Entrez la colonne (A-J) ou '-1' pour quitter : ");
+        printf("\nEntrez la case que vous souhaité attaqué colonne (A-J) puis ligne (1-10) ou -1 pour pour abandonner : ");
         scanf("%s", buffer); // On lit tout le texte (ex: "A", "b" ou "-1")
 
         // GESTION DU QUIT : On compare le texte avec "-1"
@@ -125,20 +108,19 @@ int positionnerBateau(Bateaux* b, Grille* g)
             return 0; // Code 0 = Annulation (IMPORTANT : 0, pas 1 !)
         }
 
+        if (strlen(buffer) < 2) {
+            printf("❌ Format invalide ! Utilisez le format A8 (lettre + chiffre).\n");
+            continue;
+        }
+
         // Si ce n'est pas "-1", on prend juste la première lettre
         conversion = buffer[0];
 
-        // --- 1. Saisie de la ligne ---
-        printf("Entrez la ligne (1-10) ou '-1' pour quitter : ");
-        scanf("%d", &ligne);
-        
-        // GESTION ABANDON : Si l'utilisateur tape -1
-        if (ligne == -1) {
-            // Nettoyage buffer indispensable avant de quitter
-            int c;
-            while ((c = getchar()) != '\n' && c != EOF);
-            return 0; // Code de retour 0 = Annulation
+        if (conversion >= 'a' && conversion <= 'j') {
+            conversion = conversion - 32;
         }
+
+        ligne = atoi(&buffer[1]); 
 
         // --- 3. Saisie de l'orientation ---
         printf("Orientation (H/V) : ");
@@ -160,7 +142,7 @@ int positionnerBateau(Bateaux* b, Grille* g)
         
         // CONVERSION COORDONNÉES : Humain (1-10) -> Machine (0-9)
         ligne = ligne - 1;
-        colonne = conversion - 65;
+        colonne = conversion - 'A';
 
         // --- 4. VALIDATION ---
         
@@ -212,12 +194,6 @@ int positionnerBateau(Bateaux* b, Grille* g)
 }
 
 
-/* =========================================================
- * Fonction : placerBateauxAleatoire
- * ---------------------------------------------------------
- * Place automatiquement toute la flotte d'un joueur 
- * à des positions aléatoires valides (sans chevauchement).
- * ========================================================= */
 void placerBateauxAleatoire(Joueur* j) {
     int ligne, colonne, direction;
     char orientation;
@@ -316,11 +292,7 @@ char obtenirEtat(Bateaux* b)
  * LOGIQUE SPATIALE 
  * ============================================================================ */
 
-/* -------------------------------------------------------------------------
- * Vérifier l'appartenance d'une case à un bateau
- * Cette fonction contient la logique mathématique pour savoir si un tir
- * touche CE bateau spécifique.
- * ------------------------------------------------------------------------- */
+
 int appartientAuBateau(Bateaux* b, int ligne, int colonne)
 {
     // Cas 1 : Bateau Horizontal
@@ -346,10 +318,7 @@ int appartientAuBateau(Bateaux* b, int ligne, int colonne)
     return 0; // La case ne fait pas partie de ce bateau
 }
 
-/* -------------------------------------------------------------------------
- * Vérification de Victoire Totale
- * Parcourt toute la flotte pour voir s'il reste des survivants.
- * ------------------------------------------------------------------------- */
+
 int tousCoules(Bateaux* flotte)
 {
     for (int i = 0; i < NB_BATEAUX; i++) {
@@ -362,11 +331,6 @@ int tousCoules(Bateaux* flotte)
     return 1;
 }
 
-/* -------------------------------------------------------------------------
- * Identifier un bateau touché
- * Utile quand le moteur de jeu sait qu'une case contient un '1',
- * mais doit savoir QUEL bateau c'est pour augmenter ses dégâts.
- * ------------------------------------------------------------------------- */
 int trouverBateau(Bateaux* flotte, int ligne, int colonne)
 {
     // On teste chaque bateau de la flotte un par un

@@ -3,16 +3,18 @@
 
 void MenuPrincipal(void){
     char reponse[15];
-    printf(EFFACE);
-    printf("\n======================================== \n");
-    printf(CIEL "           LA BATAILLE NAVALE" RESET);
-    printf(BLEUGRIS "\n       made by Julien, Alix, Enzo" RESET);
-    printf("\n======================================== \n");
-    printf("\nPour démarrer une partie, tapez " CYAN "play \n" RESET);
-    printf("Pour afficher les règles, tapez " CYAN "regle \n" RESET);
-    printf("Pour accéder au classement, tapez " CYAN "classement \n" RESET);
-    printf("\nVotre réponse : ");
-    scanf(" %s", reponse);
+    while((strcmp(reponse,"regle") != 0)&&(strcmp(reponse,"play") != 0)&&(strcmp(reponse, "classement") != 0)&&(strcmp(reponse, "quit") != 0)){
+        printf(EFFACE);
+        printf("\n======================================== \n");
+        printf(CIEL "           LA BATAILLE NAVALE" RESET);
+        printf(BLEUGRIS "\n       made by Julien, Alix, Enzo" RESET);
+        printf("\n======================================== \n");
+        printf("\nPour démarrer une partie, tapez " CYAN "play \n" RESET);
+        printf("Pour afficher les règles, tapez " CYAN "regle \n" RESET);
+        printf("Pour accéder au classement, tapez " CYAN "classement \n" RESET);
+        printf("\nVotre réponse : ");
+        scanf(" %s", reponse);
+    }
     if(strcmp(reponse, "regle") == 0){
         ReglesDuJeu();
     }
@@ -21,6 +23,9 @@ void MenuPrincipal(void){
     }
     if(strcmp(reponse, "classement") == 0){
         Classement();
+    }
+    if(strcmp(reponse, "quit") == 0){
+        
     }
 }
 
@@ -85,7 +90,7 @@ void Classement(void){
         MenuPrincipal();
     }
     if(strcmp(reponse, "1vs1") == 0){
-        Classement1c1();
+        Classement1vs1();
     }
     if(strcmp(reponse, "ordi") == 0){
         ChoixClassementOrdi();
@@ -119,7 +124,7 @@ void NomDesJoueurs(void){
             ModeDeJeu();
         }
         else{
-            FILE * f = fopen("registre_1c1.txt", "a+");
+            FILE * f = fopen("registre_1vs1.txt", "a+");
             if(Appartient(f, j1 -> NomJoueur) == 0){
                 fprintf(f,"%s %d \n", j1 -> NomJoueur, 0);
             }
@@ -205,8 +210,8 @@ void AjouterVictoireOrdi(Joueur * j, char difficulte[15]){
     rename("registretemporaire.txt", NomRegistre);
 }
 
-void AjouterVictoire1c1(Joueur * j){
-    FILE * f = fopen("registre_1c1.txt", "r");
+void AjouterVictoire1vs1(Joueur * j){
+    FILE * f = fopen("registre_1vs1.txt", "r");
     FILE * fichiertemporaire = fopen("registretemporaire.txt", "w");
     Joueur joueurtemporaire;
     rewind(f);
@@ -221,8 +226,8 @@ void AjouterVictoire1c1(Joueur * j){
     }
     fclose(f);
     fclose(fichiertemporaire);
-    remove("registre_1c1.txt");
-    rename("registretemporaire.txt", "registre_1c1.txt");
+    remove("registre_1vs1.txt");
+    rename("registretemporaire.txt", "registre_1vs1.txt");
 }
 
 void ChoixClassementOrdi(void){
@@ -253,7 +258,7 @@ void ChoixClassementOrdi(void){
     }
 }
 
-void Classement1c1(void){
+void Classement1vs1(void){
     char reponse[15];
     while(strcmp(reponse, "quit") != 0){
         FILE * f = fopen("registre_1c1.txt", "r");

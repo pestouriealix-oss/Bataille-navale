@@ -1,408 +1,439 @@
-#include"affichage.h"
-#include"jeu.h"
+#include "librairies.h"
+#include "affichage.h"
+#include "sauvegarde.h"
+#include "jeu.h"
 
+/* * GESTION DE LA PAUSE (Multi-plateforme)
+ * Permet de faire des pauses en millisecondes sur Windows et Mac/Linux
+ */
+#ifdef _WIN32
+    #include <windows.h>
+    #define PAUSE_MS(x) Sleep(x)
+#else
+    #include <unistd.h>
+    #define PAUSE_MS(x) usleep((x)*1000)
+#endif
+
+
+// =================================================================
+//                    1. OUTILS VISUELS
+// =================================================================
+
+/* Affiche du texte lettre par lettre pour un effet "rétro" */
+void afficherLentement(char* texte) {
+    for (int i = 0; texte[i] != '\0'; i++) {
+        printf("%c", texte[i]);
+        fflush(stdout); // Force l'écriture immédiate dans le terminal
+        PAUSE_MS(25);   // Petite pause pour l'effet de frappe
+    }
+    printf("\n");
+}
+
+
+// =================================================================
+//                    2. MENUS PRINCIPAUX
+// =================================================================
+
+/* Affiche le grand menu de démarrage avec le logo ASCII */
 void MenuPrincipal(void){
-    char reponse[15];
-    while((strcmp(reponse,"regle") != 0)&&(strcmp(reponse,"play") != 0)&&(strcmp(reponse, "classement") != 0)&&(strcmp(reponse, "quit") != 0)){
+    int choix = -1;
+    
+    while(1) {
         printf(EFFACE);
-        printf("\n======================================== \n");
-        printf(CIEL "           LA BATAILLE NAVALE" RESET);
-        printf(BLEUGRIS "\n       made by Julien, Alix, Enzo" RESET);
-        printf("\n======================================== \n");
-        printf("\nPour démarrer une partie, tapez " CYAN "play \n" RESET);
-        printf("Pour afficher les règles, tapez " CYAN "regle \n" RESET);
-        printf("Pour accéder au classement, tapez " CYAN "classement \n" RESET);
-        printf("\nVotre réponse : ");
-        scanf(" %s", reponse);
-    }
-    if(strcmp(reponse, "regle") == 0){
-        ReglesDuJeu();
-    }
-    if(strcmp(reponse, "play") == 0){
-        ModeDeJeu();
-    }
-    if(strcmp(reponse, "classement") == 0){
-        Classement();
-    }
-    if(strcmp(reponse, "quit") == 0){
         
+        // --- LOGO DU JEU ---
+        printf(CIEL "                                     |__\n");
+        printf("                                     |\\/\n");
+        printf("                                     ---\n");
+        printf("                                     / | [\n");
+        printf("                              !      | |||\n");
+        printf("                            _/|     _/|-++'\n");
+        printf("                        +  +--|    |--|--|_ |-\n");
+        printf("                     { /|__|  |/\\__|  |--- |||__/\n");
+        printf("                    +---------------___[}-_===_.'____                 /\\\n");
+        printf("                ____`-' ||___-{]_| _[}-  |     |_[___\\==--            \\/   _\n");
+        printf(" __..._____--==/___]_|__|_____________________________[___\\==--____,------' .7\n");
+        printf("|                        BATAILLE NAVALE                        BB-61/ \n");
+        printf(" \\_________________________________________________________________________|\n" RESET);
+        
+        printf("\n");
+        printf("        " VERT "╔══════════════════════════════════════════╗" RESET "\n");
+        printf("        " VERT "║            MENU PRINCIPAL                ║" RESET "\n");
+        printf("        " VERT "╚══════════════════════════════════════════╝" RESET "\n");
+        
+        // --- OPTIONS ---
+        printf("\n        " BLANC "[ 1 ]" RESET "  >   JOUER UNE PARTIE");
+        printf("\n        " BLANC "[ 2 ]" RESET "  +   CHARGER UNE SAUVEGARDE");
+        printf("\n        " BLANC "[ 3 ]" RESET "  ?   REGLES DU JEU");
+        printf("\n        " BLANC "[ 4 ]" RESET "  *   CLASSEMENT");
+        printf("\n        " BLANC "[ 0 ]" RESET "  X   QUITTER");
+        
+        printf("\n\n" JAUNE "👉 Votre ordre, Capitaine ? : " RESET);
+
+        // --- SAISIE SÉCURISÉE ---
+        // Si l'utilisateur tape une lettre, on vide le tampon pour éviter le plantage
+        if (scanf("%d", &choix) != 1) { 
+            int c; 
+            while ((c = getchar()) != '\n' && c != EOF) {} 
+            choix = -1; 
+        }
+        
+        // --- NAVIGATION ---
+        switch(choix) {
+            case 1: ModeDeJeu(); break;
+            case 2: 
+                // La logique de chargement sera appelée ici
+                break;
+            case 3: ReglesDuJeu(); break;
+            case 4: Classement(); break;
+            case 0: printf("\nRompez les rangs !\n"); exit(0);
+            default: break;
+        }
     }
 }
 
-void ReglesDuJeu(void){
-    char reponse[15];
-    while(strcmp(reponse, "quit") != 0){
-        printf(EFFACE);
-        printf("\n======================================== \n");
-        printf(CIEL "           LES REGLES DE JEU" RESET);
-        printf("\n======================================== \n");
-        printf("\n- La bataille navale oppose deux joueurs");
-        printf("\n- Chaque joueur dispose de deux grilles carrées dont les lignes sont numérotées de 1 à 10 et les colonnes de A à J");
-        printf("\n- Chaque joueur possède une flotte de cinq bateau qu'il doit disposer sur sa première grille en début de partie");
-        printf("\n- L'autre grille représente la zone adverse, où il cherchera à couler les bateaux de son adversaire");
-        printf("\n- Chaque joueur, à son tour, annonce une case, et son adversaire lui répond si le tir tombe à l'eau ou au contraire s'il touche un bateau.");
-        printf("\n- La partie se termine lorsque l'un des deux joueurs ne possède plus de bateau viable sur se grille \n");
-        printf("\nPour retourner au menu principal, tapez " CYAN "quit \n" RESET);
-        printf("\nVotre réponse : ");
-        scanf(" %s", reponse);
-    }
-    MenuPrincipal();
-}
-
+/* Choix entre 1vs1 ou Contre l'Ordinateur */
 void ModeDeJeu(void){
-    char reponse[15];
-    while((strcmp(reponse, "quit") != 0) && (strcmp(reponse, "1vs1") != 0) && (strcmp(reponse, "ordi") != 0)){
+    int choix = -1;
+    while(1) {
         printf(EFFACE);
-        printf("\n======================================== \n");
-        printf(CIEL "        SELECTION DU MODE DE JEU" RESET);
-        printf("\n======================================== \n");
-        printf("\nPour démarrer une partie joueur conte joueur, tapez " CYAN "1vs1" RESET);
-        printf("\nPour démarrer une partie contre l'ordinateur, tapez " CYAN "ordi \n" RESET);
-        printf("\nPour retourner au menu principal, tapez " CYAN "quit \n" RESET);
-        printf("\nVotre réponse : ");
-        scanf(" %s", reponse);
-    }
-    if(strcmp(reponse, "quit") == 0){
-        MenuPrincipal();
-    }
-    if(strcmp(reponse, "1vs1") == 0){
-        NomDesJoueurs();
-    }
-    if(strcmp(reponse, "ordi") == 0){
-        ChoixDifficulte();
+        printf("\n=== MODE DE JEU ===\n");
+        printf("  1. 1 vs 1\n");
+        printf("  2. Contre Ordi\n");
+        printf("  0. Retour\n");
+        printf("\n👉 Votre choix : ");
+        
+        if (scanf("%d", &choix) != 1) { int c; while ((c = getchar()) != '\n' && c != EOF) {} choix = -1; }
+        
+        if (choix == 1) { NomDesJoueurs(); return; }   // Vers config 1vs1
+        if (choix == 2) { ChoixDifficulte(); return; } // Vers config IA
+        if (choix == 0) return;
     }
 }
 
-void Classement(void){
-    char reponse[15];
-    while(strcmp(reponse, "quit") != 0 && (strcmp(reponse, "1vs1") != 0) && (strcmp(reponse, "ordi") != 0)){
+/* Choix de la difficulté pour l'IA */
+void ChoixDifficulte(void){
+    int choix = -1;
+    while(1){
         printf(EFFACE);
-        printf("\n======================================== \n");
-        printf(CIEL "              CLASSEMENT" RESET);
-        printf("\n======================================== \n");
-        printf("\nPour accéder au classement joueur contre joueur, tapez " CYAN "1vs1" RESET);
-        printf("\nPour accéder au classement joueur contre ordinateur, tapez " CYAN "ordi \n" RESET);
-        printf("\nPour retourner au menu principal, tapez " CYAN "quit \n" RESET);
-        printf("\nVotre réponse : ");
-        scanf(" %s", reponse);
-    }
-    if(strcmp(reponse, "quit") == 0){
-        MenuPrincipal();
-    }
-    if(strcmp(reponse, "1vs1") == 0){
-        Classement1vs1();
-    }
-    if(strcmp(reponse, "ordi") == 0){
-        ChoixClassementOrdi();
+        printf("\n=== DIFFICULTÉ ===\n");
+        printf("  1. Facile\n");
+        printf("  2. Moyen\n");
+        printf("  3. Difficile\n");
+        printf("  0. Retour\n");
+        printf("\n👉 Votre choix : ");
+        
+        if (scanf("%d", &choix) != 1) { int c; while ((c = getchar()) != '\n' && c != EOF) {} choix = -1; }
+        
+        if (choix == 1) { NomDuJoueur("facile"); return; }
+        if (choix == 2) { NomDuJoueur("moyen"); return; }
+        if (choix == 3) { NomDuJoueur("difficile"); return; }
+        if (choix == 0) return;
     }
 }
 
+/* Affichage simple du texte des règles */
+void ReglesDuJeu(void){
+    printf(EFFACE);
+    printf(JAUNE "\n=== REGLES DU JEU ===\n" RESET);
+    printf("1. Placez vos 5 bateaux sur la grille (sans chevauchement).\n");
+    printf("2. Tirez chacun votre tour sur la grille adverse.\n");
+    printf("3. 'Touché' = bateau touché, 'Coulé' = bateau détruit.\n");
+    printf("4. Le premier qui coule toute la flotte adverse GAGNE !\n");
+    printf("\nAppuyez sur Entrée pour revenir...");
+    getchar(); getchar();
+}
+
+/* Ecran de victoire animé à la fin de la partie */
+void MenuFinDePartie(Joueur *j){
+    int choix = -1;
+    while(1){
+        printf(EFFACE);
+        printf("\n"); 
+        
+        // Animation du texte de victoire
+        printf(VERT); 
+        afficherLentement("**********************************");
+        afficherLentement("      VICTOIRE CONFIRMEE !        ");
+        afficherLentement("**********************************");
+        printf(RESET); 
+        
+        printf("\nFelicitations %s.\n", j->NomJoueur);
+        printf("\n");
+        
+        printf("  [1] Rejouer une bataille\n");
+        printf("  [0] Retour au Quartier General\n");
+        
+        printf(JAUNE "\n> Ordre : " RESET);
+        
+        if (scanf("%d", &choix) != 1) { 
+            int c; while ((c = getchar()) != '\n' && c != EOF) {} 
+            choix = -1; 
+        }
+        
+        if (choix == 1) { ModeDeJeu(); return; }
+        if (choix == 0) { MenuPrincipal(); return; }
+    }
+}
+
+
+// =================================================================
+//                    3. INITIALISATION PARTIE
+// =================================================================
+
+/* Configuration pour le mode 1 vs 1 */
 void NomDesJoueurs(void){
     Joueur * j1 = creerJoueur();
     Joueur * j2 = creerJoueur();
-    printf(EFFACE);
-    printf("\n======================================== \n");
-    printf(CIEL "         SELECTION DES JOUEURS" RESET);
-    printf("\n======================================== \n");
-    printf("\nEntrer le nom du premier joueur \n");
-    printf("\nPour retourner au menu précédent, tapez " CYAN "quit \n" RESET);
-    printf("\nVotre réponse : ");
-    scanf(" %s", j1 -> NomJoueur);
-    if(strcmp(j1 -> NomJoueur, "quit") == 0){
-        ModeDeJeu();
-    }
-    else{
-        printf(EFFACE);
-        printf("\n======================================== \n");
-        printf(CIEL "         SELECTION DES JOUEURS" RESET);
-        printf("\n======================================== \n");
-        printf("\nEntrer le nom du deuxième joueur \n");
-        printf("\nPour retourner au menu précédent, tapez " CYAN "quit \n" RESET);
-        printf("\nVotre réponse : ");
-        scanf(" %s", j2 -> NomJoueur);
-        if(strcmp(j2 -> NomJoueur, "quit") == 0){
-            ModeDeJeu();
-        }
-        else{
-            FILE * f = fopen("registre_1vs1.txt", "a+");
-            if(Appartient(f, j1 -> NomJoueur) == 0){
-                fprintf(f,"%s %d \n", j1 -> NomJoueur, 0);
-            }
-            if(Appartient(f, j2 -> NomJoueur) == 0){
-                fprintf(f,"%s %d \n", j2 -> NomJoueur, 0);
-            }
-            fclose(f);
-        }
-    }
-    jouerPartie(j1, j2);
-}
-
-void NomDuJoueur(char difficulte[15]){
-    Joueur * j = creerJoueur();
     
     printf(EFFACE);
-    printf("\n======================================== \n");
-    printf(CIEL "         SELECTION DU JOUEUR" RESET);
-    printf("\n======================================== \n");
-    printf("\nEntrer le nom du joueur \n");
-    printf("\nPour retourner au menu précédent, tapez " CYAN "quit \n" RESET);
-    printf("\nVotre réponse : ");
-    scanf(" %s",  j -> NomJoueur);
+    printf("Nom Joueur 1 : "); scanf("%s", j1->NomJoueur);
+    printf("Nom Joueur 2 : "); scanf("%s", j2->NomJoueur);
+    
+    // On initialise le fichier de score s'il n'existe pas
+    AjouterVictoire1vs1(j1); 
+    
+    // On lance le jeu (Tour 1, 0 secondes de jeu)
+    jouerPartie(j1, j2, 1, 0); 
+}
 
-    if(strcmp(j -> NomJoueur, "quit") == 0){
-        ChoixDifficulte();
+/* Configuration pour le mode Contre Ordi */
+void NomDuJoueur(char difficulte[15]){
+    Joueur * j = creerJoueur();
+    printf(EFFACE);
+    printf("Votre Nom : "); scanf("%s", j->NomJoueur);
+    
+    // On lance le jeu contre l'IA
+    jouerPartieOrdi(j, NULL, difficulte, 1, 0);
+}
+
+
+// =================================================================
+//                    4. INTERFACE EN JEU (HUD)
+// =================================================================
+
+/* Affiche la barre d'info en haut (Tour, Chrono, Joueur) */
+void AfficherHUD(int tour, long temps, char* nomJoueur) {
+    long min = temps / 60;
+    long sec = temps % 60;
+
+    // Bordure haute
+    printf("          " BG_NOIR BLANC " ╔══════════════════════════════════════════════════════════╗ " RESET "\n");
+    
+    // Ligne d'information formatée
+    // %-3d aligne le nombre à gauche, %02ld ajoute un zéro si < 10 (ex: 09)
+    printf("          " BG_NOIR BLANC " ║ " JAUNE "TOUR: %-3d" BLANC " │ " CYAN "CHRONO: %02ld:%02ld" BLANC " │ " VERT "JOUEUR: %-14.14s" BLANC " ║ " RESET "\n",
+           tour, min, sec, nomJoueur);
+           
+    // Bordure basse
+    printf("          " BG_NOIR BLANC " ╚══════════════════════════════════════════════════════════╝ " RESET "\n");
+}
+
+
+// =================================================================
+//                    5. CLASSEMENT (Scores)
+// =================================================================
+
+/* Fonction générique pour lire un fichier, trier et afficher le tableau */
+void AfficherClassement(FILE * f){
+    if (!f) return;
+    Joueur tab[100]; 
+    int n = 0;
+    
+    // 1. Lecture des données dans le fichier
+    rewind(f);
+    while(fscanf(f, "%s %d", tab[n].NomJoueur, &tab[n].NbVictoire) == 2 && n<100) n++;
+    
+    // 2. Tri à bulles (Du plus grand nombre de victoires au plus petit)
+    for(int i=0; i<n-1; i++) {
+        for(int j=0; j<n-i-1; j++) {
+            if (tab[j].NbVictoire < tab[j+1].NbVictoire) {
+                Joueur temp = tab[j]; 
+                tab[j] = tab[j+1]; 
+                tab[j+1] = temp;
+            }
+        }
     }
-    else{
-        // Enregistrement des fichiers (Ton code existant)
-        if(strcmp(difficulte, "facile") == 0){
-            FILE * f = fopen("registre_facile.txt", "a+");
-            if(Appartient(f, j -> NomJoueur) == 0){
-            fprintf(f,"%s %d \n", j -> NomJoueur, 0);
-            fclose(f);
-            }
-        }
-        if(strcmp(difficulte, "moyen") == 0){
-            FILE * f = fopen("registre_moyen.txt", "a+");
-            if(Appartient(f, j -> NomJoueur) == 0){
-            fprintf(f,"%s %d \n", j -> NomJoueur, 0);
-            fclose(f);
-            }
-        }
-        if(strcmp(difficulte, "difficile") == 0){
-            FILE * f = fopen("registre_difficile.txt", "a+");
-            if(Appartient(f, j -> NomJoueur) == 0){
-            fprintf(f,"%s %d \n", j -> NomJoueur, 0);
-            fclose(f);
-            }
-        }
+    
+    // 3. Affichage du tableau décoré
+    printf("\n");
+    printf("   " BLANC "╔════╤══════════════════════╤═══════════╗" RESET "\n");
+    printf("   " BLANC "║" RESET " Rg " BLANC "│" RESET " NOM DU CAPITAINE     " BLANC "│" RESET " VICTOIRES " BLANC "║" RESET "\n");
+    printf("   " BLANC "╠════╪══════════════════════╪═══════════╣" RESET "\n");
+
+    for(int i=0; i<n; i++) {
+        char* coul = RESET;
+        char medaille = ' ';
         
-        jouerPartieOrdi(j, difficulte);
+        // Coloration du podium (Or, Argent, Bronze)
+        if (i == 0)      { coul = JAUNE; medaille = '*'; } 
+        else if (i == 1) { coul = CYAN;  medaille = '+'; } 
+        else if (i == 2) { coul = ROUGE; medaille = '-'; } 
+        else             { medaille = ' '; }
+        
+        // Formatage précis pour aligner les colonnes
+        printf("   " BLANC "║" RESET " %s%-2d%c" RESET BLANC "│" RESET " %s%-20.20s " RESET BLANC "│" RESET " %s   %3d    " RESET BLANC "║" RESET "\n", 
+               coul, i+1, medaille, coul, tab[i].NomJoueur, coul, tab[i].NbVictoire);
     }
+    
+    printf("   " BLANC "╚════╧══════════════════════╧═══════════╝" RESET "\n");
+    
+    if (n > 0) printf("\n   " JAUNE "* Or   " CYAN "+ Argent   " ROUGE "- Bronze" RESET "\n");
 }
 
-void AjouterVictoireOrdi(Joueur * j, char difficulte[15]){
-    char NomRegistre[30];
-     if(strcmp(difficulte, "facile") == 0){
-        strcpy(NomRegistre, "registre_facile.txt");
-    }
-    if(strcmp(difficulte, "moyen") == 0){
-        strcpy(NomRegistre, "registre_moyen.txt");
-    }
-    if(strcmp(difficulte, "difficile") == 0){
-        strcpy(NomRegistre, "registre_difficile.txt");
-    }
-    FILE * f = fopen(NomRegistre, "r");
-    FILE * fichiertemporaire = fopen("registretemporaire.txt", "w");
-    Joueur joueurtemporaire;
-    rewind(f);
-    while(fscanf(f, "%s %d", joueurtemporaire.NomJoueur, &joueurtemporaire.NbVictoire) == 2){
-        if(strcmp(joueurtemporaire.NomJoueur, j -> NomJoueur) == 0){
-            joueurtemporaire.NbVictoire += 1;
-            fprintf(fichiertemporaire, "%s %d \n", joueurtemporaire.NomJoueur, joueurtemporaire.NbVictoire);
-        }
-        else{
-            fprintf(fichiertemporaire, "%s %d \n", joueurtemporaire.NomJoueur, joueurtemporaire.NbVictoire);
-        }
-    }
-    fclose(f);
-    fclose(fichiertemporaire);
-    remove(NomRegistre);
-    rename("registretemporaire.txt", NomRegistre);
-}
-
-void AjouterVictoire1vs1(Joueur * j){
-    FILE * f = fopen("registre_1vs1.txt", "r");
-    FILE * fichiertemporaire = fopen("registretemporaire.txt", "w");
-    Joueur joueurtemporaire;
-    rewind(f);
-    while(fscanf(f, "%s %d", joueurtemporaire.NomJoueur, &joueurtemporaire.NbVictoire) == 2){
-        if(strcmp(joueurtemporaire.NomJoueur, j -> NomJoueur) == 0){
-            joueurtemporaire.NbVictoire += 1;
-            fprintf(fichiertemporaire, "%s %d \n", joueurtemporaire.NomJoueur, joueurtemporaire.NbVictoire);
-        }
-        else{
-            fprintf(fichiertemporaire, "%s %d \n", joueurtemporaire.NomJoueur, joueurtemporaire.NbVictoire);
-        }
-    }
-    fclose(f);
-    fclose(fichiertemporaire);
-    remove("registre_1vs1.txt");
-    rename("registretemporaire.txt", "registre_1vs1.txt");
-}
-
-void ChoixClassementOrdi(void){
-    char reponse[15];
-    while((strcmp(reponse, "quit") != 0)&&(strcmp(reponse, "facile") != 0)&&(strcmp(reponse, "moyen") != 0)&&(strcmp(reponse, "difficile") != 0)){
+/* Menu de sélection du classement à voir */
+void Classement(void){
+    int choix = -1;
+    while(1) {
         printf(EFFACE);
-        printf("\n======================================== \n");
-        printf(CIEL "  CLASSEMENT JOUEUR CONTRE ORDINATEUR" RESET);
-        printf("\n======================================== \n");
-        printf("\nPour accéder au classement difficulté facile, tapez " CYAN "facile" RESET);
-        printf("\nPour accéder au classement difficulté moyenne tapez " CYAN "moyen" RESET);
-        printf("\nPour accéder au classement difficulté difficile, tapez " CYAN "difficile" RESET);
-        printf("\n\nPour retourner au menu principal, tapez " CYAN "quit \n" RESET);
-        printf("\nVotre réponse : ");
-        scanf(" %s", reponse);
-    }
-    if(strcmp(reponse, "quit") == 0){
-        Classement();
-    }
-    if(strcmp(reponse, "facile") == 0){
-        ClassementOrdi(reponse);
-    }
-    if(strcmp(reponse, "moyen") == 0){
-        ClassementOrdi(reponse);
-    }
-    if(strcmp(reponse, "difficile") == 0){
-        ClassementOrdi(reponse);
+        printf("\n=== CLASSEMENT ===\n");
+        printf("  1. 1 vs 1\n");
+        printf("  2. Contre Ordi\n");
+        printf("  0. Retour\n");
+        printf("\n👉 Choix : ");
+        
+        if (scanf("%d", &choix) != 1) { int c; while ((c = getchar()) != '\n' && c != EOF) {} choix = -1; }
+        
+        if (choix == 1) Classement1vs1();
+        else if (choix == 2) ChoixClassementOrdi();
+        else if (choix == 0) return;
     }
 }
 
+/* Prépare et affiche le classement 1vs1 */
 void Classement1vs1(void){
-    char reponse[15];
-    while(strcmp(reponse, "quit") != 0){
-        FILE * f = fopen("registre_1c1.txt", "r");
-        printf(EFFACE);
-        printf("\n======================================== \n");
-        printf(CIEL "    CLASSEMENT JOUEUR CONTRE JOUEUR" RESET);
-        printf("\n======================================== \n");
+    FILE* f = fopen("registre_1vs1.txt", "r");
+    
+    printf(EFFACE); 
+    printf(CIEL "\n=== CLASSEMENT 1VS1 ===\n" RESET);
+    
+    if(f) {
         AfficherClassement(f);
         fclose(f);
-        printf("\n\nPour retourner au menu principal, tapez " CYAN "quit \n" RESET);
-        printf("\nVotre réponse : ");
-        scanf(" %s", reponse);
+    } else {
+        printf("Aucun classement pour le moment.\n");
     }
-    Classement();
+    
+    printf("\nAppuyez sur Entrée pour revenir..."); 
+    getchar(); getchar();
 }
 
-int ComparerScores(const void * a, const void * b){
-    Joueur *joueurA = (Joueur *)a;
-    Joueur *joueurB = (Joueur *)b;
-    return joueurB->NbVictoire - joueurA->NbVictoire;
+/* Choix de la difficulté pour voir le classement Ordi */
+void ChoixClassementOrdi(void){
+    int choix = 0;
+    while(1){
+        printf(EFFACE);
+        printf("\n=== CLASSEMENT ORDI ===\n");
+        printf("  1. Facile\n");
+        printf("  2. Moyen\n");
+        printf("  3. Difficile\n");
+        printf("  0. Retour\n");
+        printf("\n👉 Votre choix : ");
+        
+        if (scanf("%d", &choix) != 1) { int c; while ((c = getchar()) != '\n' && c != EOF) {} choix = -1; }
+        
+        if(choix == 0) return;
+        if(choix == 1) ClassementOrdi("facile");
+        if(choix == 2) ClassementOrdi("moyen");
+        if(choix == 3) ClassementOrdi("difficile");
+    }
 }
 
-void AfficherClassement(FILE * f){
-    if (f == NULL) {
-        printf("Erreur : impossible d'ouvrir le fichier \n");
+/* Prépare et affiche le classement Ordi selon la difficulté */
+void ClassementOrdi(char *difficulte){
+    char nomFichier[30];
+    sprintf(nomFichier, "registre_%s.txt", difficulte); // Construit le nom ex: "registre_facile.txt"
+
+    FILE * f = fopen(nomFichier, "r");
+    printf(EFFACE);
+    printf(CIEL "\n=== CLASSEMENT ORDI (%s) ===\n" RESET, difficulte);
+    
+    if(f) {
+        AfficherClassement(f);
+        fclose(f);
+    } else {
+        printf("Aucun classement pour le moment.\n");
+    }
+    
+    printf("\nAppuyez sur Entrée pour revenir...");
+    getchar(); getchar();
+}
+
+/* Ajoute une victoire dans le fichier Ordi (via fichier temporaire) */
+void AjouterVictoireOrdi(Joueur * j, char *difficulte){
+    char nomFichier[30];
+    sprintf(nomFichier, "registre_%s.txt", difficulte);
+    
+    FILE * f = fopen(nomFichier, "r");
+    
+    // Cas où le fichier n'existe pas encore : on le crée
+    if (!f) {
+        f = fopen(nomFichier, "w");
+        if(f) { fprintf(f, "%s %d\n", j->NomJoueur, 1); fclose(f); }
         return;
     }
-    Joueur tabjoueur[100];
-    int NbJoueur = 0;
-    while(fscanf(f, "%s %d", tabjoueur[NbJoueur].NomJoueur, &tabjoueur[NbJoueur].NbVictoire) == 2){
-        NbJoueur++;
-    }
-    qsort(tabjoueur, NbJoueur, sizeof(Joueur), ComparerScores);
-    for (int i = 0; i < NbJoueur; i++) {
-        printf("\n%d. %s : %d", i+1, tabjoueur[i].NomJoueur, tabjoueur[i].NbVictoire);
-    }
-}
 
-void MenuFinDePartie(Joueur * j){
-    char reponse[15];
-    while((strcmp(reponse, "quit") != 0) && (strcmp(reponse, "stat") != 0)){
-        printf(EFFACE);
-        printf("\n======================================== \n");
-        printf(CIEL "           Victoire de %s" RESET, j -> NomJoueur);
-        printf("\n======================================== \n");
-        printf("\nPour redémarrer une partie, tapez " CYAN "play" RESET);
-        printf("\nPour visualiser les statistiques de la partie, tapez " CYAN "stat" RESET);
-        printf("\n\nPour retourner au menu principal, tapez " CYAN "quit \n" RESET);
-        printf("\nVotre réponse : ");
-        scanf(" %s", reponse);
-    }
-    if(strcmp(reponse, "quit") == 0){
-        MenuPrincipal();
-    }
-    if(strcmp(reponse, "stat") == 0){
-        // Afficher les statistiques de la partie (moyenne de temps des coups, nombre de case explore, nombre de bateau coulé)
-    }
-    if(strcmp(reponse, "play") == 0){
-        ModeDeJeu();
-    }
-}
+    FILE * temp = fopen("temp_ordi.txt", "w");
+    if(!temp) { fclose(f); return; }
 
-
-void ChoixDifficulte(void){
-    char reponse[15];
-    while((strcmp(reponse, "quit") != 0)&&(strcmp(reponse, "facile") != 0)&&(strcmp(reponse, "moyen") != 0)&&(strcmp(reponse, "difficile") != 0)){
-        printf(EFFACE);
-        printf("\n======================================== \n");
-        printf(CIEL "         CHOIX DE LA DIFFICULTÉ" RESET);
-        printf("\n======================================== \n");
-        printf("\nPour choisir la difficulté facile, tapez " CYAN "facile" RESET);
-        printf("\nPour choisir la difficulté moyenne, tapez " CYAN "moyen" RESET);
-        printf("\nPour choisir la difficulté difficile, tapez " CYAN "difficile" RESET);
-        printf("\n\nPour retourner au menu précédent, tapez " CYAN "quit \n" RESET);
-        printf("\nVotre réponse : ");
-        scanf(" %s", reponse);
-    }
-    if(strcmp(reponse, "quit") == 0){
-        ModeDeJeu();
-    }
-    if(strcmp(reponse, "facile") == 0){
-        NomDuJoueur(reponse);
-    }
-    if(strcmp(reponse, "moyen") == 0){
-        NomDuJoueur(reponse);
-    }
-    if(strcmp(reponse, "difficile") == 0){
-        NomDuJoueur(reponse);
-    }
-}
-
-void ClassementOrdi(char difficulte[15]){
-    char reponse[15];
-    while(strcmp(reponse, "quit") != 0){
-        if(strcmp(difficulte, "facile") == 0){
-            FILE * f = fopen("registre_facile.txt", "r");
-            printf(EFFACE);
-            printf("======================================== \n");
-            printf(CIEL "  CLASSEMENT JOUEUR CONTRE ORDINATEUR" RESET);
-            printf("\n======================================== \n");
-            AfficherClassement(f);
-            fclose(f);
-            printf("\n\nPour retourner au menu principal, tapez " CYAN "quit \n" RESET);
-            printf("\nVotre réponse : ");
-            scanf(" %s", reponse);
-        }
-        if(strcmp(difficulte, "moyen") == 0){
-            FILE * f = fopen("registre_moyen.txt", "r");
-            printf(EFFACE);
-            printf("======================================== \n");
-            printf(CIEL "  CLASSEMENT JOUEUR CONTRE ORDINATEUR" RESET);
-            printf("\n======================================== \n");
-            AfficherClassement(f);
-            fclose(f);
-            printf("\n\nPour retourner au menu principal, tapez " CYAN "quit \n" RESET);
-            printf("\nVotre réponse : ");
-            scanf(" %s", reponse);
-        }
-        if(strcmp(difficulte, "difficile") == 0){
-            FILE * f = fopen("registre_difficile.txt", "r");
-            printf(EFFACE);
-            printf("======================================== \n");
-            printf(CIEL "  CLASSEMENT JOUEUR CONTRE ORDINATEUR" RESET);
-            printf("\n======================================== \n");
-            AfficherClassement(f);
-            fclose(f);
-            printf("\n\nPour retourner au menu principal, tapez " CYAN "quit \n" RESET);
-            printf("\nVotre réponse : ");
-            scanf(" %s", reponse);
+    char nomLu[50];
+    int victoiresLu;
+    int trouve = 0;
+    
+    // On recopie tout en mettant à jour le score du joueur
+    while(fscanf(f, "%s %d", nomLu, &victoiresLu) == 2){
+        if(strcmp(nomLu, j->NomJoueur) == 0){
+            fprintf(temp, "%s %d\n", nomLu, victoiresLu + 1); 
+            trouve = 1;
+        } else {
+            fprintf(temp, "%s %d\n", nomLu, victoiresLu); 
         }
     }
-    ChoixClassementOrdi();
+    
+    // Si le joueur n'était pas dans la liste, on l'ajoute
+    if (!trouve) {
+        fprintf(temp, "%s %d\n", j->NomJoueur, 1);
+    }
+    
+    fclose(f);
+    fclose(temp);
+    remove(nomFichier);                // Supprime l'ancien fichier
+    rename("temp_ordi.txt", nomFichier); // Renomme le temporaire
 }
 
-int Appartient(FILE * f, char NomJoueur[]){
-    int v = 0;
-    Joueur temporaire;
-    rewind(f);
-    while(fscanf(f, "%s %d", temporaire.NomJoueur, &temporaire.NbVictoire) == 2){
-        if(strcmp(temporaire.NomJoueur, NomJoueur) == 0){
-            v = 1;
-            break;
+/* Ajoute une victoire dans le fichier 1vs1 (via fichier temporaire) */
+void AjouterVictoire1vs1(Joueur * j){
+    const char* FICHIER = "registre_1vs1.txt";
+    FILE * f = fopen(FICHIER, "r");
+    
+    if (!f) {
+        f = fopen(FICHIER, "w");
+        if(f) { fprintf(f, "%s %d\n", j->NomJoueur, 1); fclose(f); }
+        return;
+    }
+
+    FILE * temp = fopen("temp_1vs1.txt", "w");
+    if(!temp) { fclose(f); return; }
+    
+    char nomLu[50];
+    int victoiresLu;
+    int trouve = 0;
+    
+    while(fscanf(f, "%s %d", nomLu, &victoiresLu) == 2){
+        if(strcmp(nomLu, j->NomJoueur) == 0){
+            fprintf(temp, "%s %d\n", nomLu, victoiresLu + 1);
+            trouve = 1;
+        } else {
+            fprintf(temp, "%s %d\n", nomLu, victoiresLu);
         }
     }
-    return v;
+    
+    if (!trouve) {
+        fprintf(temp, "%s %d\n", j->NomJoueur, 1);
+    }
+    
+    fclose(f);
+    fclose(temp);
+    remove(FICHIER);
+    rename("temp_1vs1.txt", FICHIER);
 }
-

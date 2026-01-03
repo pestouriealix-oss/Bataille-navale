@@ -3,88 +3,88 @@
 
 #include "librairies.h"
 
+/**
+ * ============================================================================
+ * FICHIER : grille.h
+ * ----------------------------------------------------------------------------
+ * Gère la structure de données de la grille (plateau de jeu) et les opérations
+ * directes dessus : création, affichage, tirs et nettoyage mémoire.
+ * ============================================================================
+ */
+
+
 /* =========================================================
  * STRUCT : Grille
  * ---------------------------------------------------------
- * Représente la grille de jeu pour un joueur dans la
- * bataille navale.
- *
- * Chaque case du tableau correspond à une position sur
- * la grille (ligne, colonne).
- * 
- * Convention possible pour les valeurs du tableau :
- * 0 : EAU (case vide)
- * 1 : BATEAU (Présent mais non touché)
- * 2 : PLOUF (Tir raté dans l'eau)
+ * Représente le plateau de 10x10 cases.
+ * * Valeurs possibles dans le tableau :
+ * 0 : EAU    (Case vide)
+ * 1 : BATEAU (Présent mais caché/intact)
+ * 2 : RATÉ   (Tir dans l'eau - "Plouf")
  * 3 : TOUCHÉ (Bateau touché par un tir)
- *
- * Dimensions :
- *   La grille est de 10x10 cases 
- * 
- * Détails techniques :
- *   La grille est implémentée sous forme d’un tableau 10x10
- *   d’entiers. Les fonctions qui doivent modifier son contenu
- *   (ex : initialiser, placer un bateau, enregistrer un tir)
- *   recevront un *pointeur vers la structure Grille*.
- *
- *   - Sans pointeur, une fonction travaillerait sur une copie
- *     locale de la grille et les modifications ne seraient
- *     pas visibles à l’extérieur.
- *   - En passant un pointeur (Grille *g), on agit directement
- *     sur la grille originale du joueur.
- *
  * ========================================================= */
-
 struct grille {
     int tab[10][10];  /* Matrice 10x10 représentant l'état du jeu */
 };
 
-typedef struct grille Grille;  /* Alias pour simplifier l’utilisation */
+typedef struct grille Grille;
+
 
 /* ============================================================================
- * FONCTIONS PRINCIPALES
+ * 1. INITIALISATION ET MÉMOIRE
  * ============================================================================ */
 
-/** 
- * @brief Alloue et initialise une nouvelle grille de jeu.
-* * Cette fonction réserve la mémoire pour une strucure Grille et remplit
-* toutes les cases avec des 0 (EAU).
-* * @return Grille* Un pointeur vers la grille créée (ou NULL si échec).
-*/
+/** * @brief Alloue et initialise une nouvelle grille de jeu vide.
+ * * Cette fonction réserve la mémoire pour une structure Grille et remplit
+ * toutes les cases avec des 0 (EAU).
+ * * @return Grille* Un pointeur vers la grille créée (ou NULL si échec).
+ */
 Grille* initialiser(void);
 
 /**
- * @brief Affiche le contenu brut de la grille (pour débogage)
- * Affiche simplement les 0, 1, 2, 3 sans coordonnées.
- * @param g pointeur vers la grille à afficher.
- */
-void afficher(Grille*);
-
-/**
  * @brief Libère la mémoire occupée par une grille.
- * *@param g Pointeur vers la grille à détruire.
+ * * @param g Pointeur vers la grille à détruire.
  */
-void detruireGrille(Grille*);
+void detruireGrille(Grille* g);
+
+
+/* ============================================================================
+ * 2. AFFICHAGE
+ * ============================================================================ */
 
 /**
- * @brief Affiche la grille avec les coordonnées (A-J, 1-10).
- * C'est la fonction principale d'affichage pour le joueur actif.
+ * @brief Affiche la grille complète avec le design du jeu (Couleurs, Cadres).
+ * * C'est la fonction utilisée pour afficher SA PROPRE grille.
+ * On voit tout : l'eau, les bateaux, les tirs réussis et ratés.
  * * @param g Pointeur vers la grille.
  */
-void afficherCoordonnees(Grille*);
+void afficherCoordonnees(Grille* g);
 
 /**
- * @brief Affiche la grille en cachant les bateaux 
- * * Utile pour afficher la grille de l'adversaire :
- *  - Les bateaux intacts (1) sont affichés comme de l'eau (0).
- *  - Seules les tirs ratés (2) et touchés (3) sont révélés.
- * * @param g pointeur vers la grille.
+ * @brief Affiche la grille en CACHANT les bateaux intacts.
+ * * C'est la fonction utilisée pour afficher la grille de l'ADVERSAIRE.
+ * - Les bateaux (1) sont affichés comme de l'eau (~) pour ne pas tricher.
+ * - Les tirs ratés (2) et touchés (3) sont visibles.
+ * * @param g Pointeur vers la grille.
  */
-void afficherMasque(Grille*);
+void afficherMasque(Grille* g);
+
+/**
+ * @brief Affiche le contenu brut de la grille (Mode Débogage).
+ * * Affiche simplement une matrice de chiffres (0, 1, 2, 3) sans décoration.
+ * Utile pour vérifier la logique interne si l'affichage bug.
+ * * @param g Pointeur vers la grille.
+ */
+void afficher(Grille* g);
+
+
+/* ============================================================================
+ * 3. ACTIONS DE JEU
+ * ============================================================================ */
 
 /**
  * @brief Gère un tir sur une case donnée.
- * * Vérifie si le tir est valide, met à jour la grille, et renvoie le résultat.
+ * * Vérifie les coordonnées, l'état de la case cible, et met à jour la grille.
  * * @param g Pointeur vers la grille cible.
  * @param ligne Index de la ligne (0-9).
  * @param colonne Index de la colonne (0-9).
@@ -94,6 +94,6 @@ void afficherMasque(Grille*);
  * -1 : DÉJÀ JOUÉ (Case déjà visée auparavant)
  * -2 : HORS GRILLE (Coordonnées invalides)
  */
-int tirer(Grille*, int, int);
+int tirer(Grille* g, int ligne, int colonne);
 
 #endif

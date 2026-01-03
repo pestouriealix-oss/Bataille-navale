@@ -4,8 +4,8 @@
 #include "librairies.h"
 #include "grille.h"
 
+// Pré-déclaration de la structure Joueur pour éviter les inclusions circulaires
 typedef struct joueur Joueur;
-
 
 /**
  * Constante : Nombre de bateaux par joueur.
@@ -28,139 +28,133 @@ typedef struct joueur Joueur;
  * Si touche == taille, le bateau est COULÉ.
  * ============================================================================
  */
-struct bateaux{
+typedef struct bateaux {
     char nom[20];
     int ligne;
     int colonne;
     int taille; 
     char orientation; // 'H' ou 'V'
     int touche;       // Compteur de dégâts
-};
+} Bateaux;
 
-typedef struct bateaux Bateaux;
 
 /* ============================================================================
- * INITIALISATION ET MÉMOIRE
+ * 1. INITIALISATION ET MÉMOIRE
  * ============================================================================ */
 
 /**
  * @brief Crée la flotte standard complète d'un joueur.
- * * Alloue un tableau de 5 structures Bateaux et initialise leurs noms
+ * Alloue un tableau de 5 structures Bateaux et initialise leurs noms
  * et tailles selon les règles classiques. Les positions sont mises à -1.
- * * @return Bateaux* Pointeur vers le tableau de bateaux (la flotte).
+ * @return Bateaux* Pointeur vers le tableau de bateaux (la flotte).
  */
 Bateaux* creerFlotte(void);
 
 /**
  * @brief Libère la mémoire d'une flotte entière.
- * * @param flotte Pointeur vers le tableau à libérer.
+ * @param flotte Pointeur vers le tableau à libérer.
  */
 void detruireFlotte(Bateaux* flotte);
 
 /**
- * @brief Crée un seul bateau vide (utilitaire).
- * * @return Bateaux* Pointeur vers la structure créée.
+ * @brief Crée un seul bateau vide (utilitaire interne).
+ * @return Bateaux* Pointeur vers la structure créée.
  */
 Bateaux* creerBateaux(void);
 
 /**
  * @brief Libère la mémoire d'un seul bateau.
- * * @param b Pointeur vers le bateau.
+ * @param b Pointeur vers le bateau.
  */
 void detruireBateaux(Bateaux* b);
 
 
 /* ============================================================================
- * PLACEMENT ET INTERACTION
+ * 2. PLACEMENT ET INTERACTION
  * ============================================================================ */
 
 /**
  * @brief Gère le placement interactif d'un bateau sur la grille.
- * * Demande à l'utilisateur de saisir des coordonnées et une orientation.
+ * Demande à l'utilisateur de saisir des coordonnées et une orientation.
  * Vérifie la validité (collisions, hors limites) et met à jour la grille.
- * * @param b Pointeur vers le bateau à placer.
+ * @param b Pointeur vers le bateau à placer.
  * @param g Pointeur vers la grille du joueur.
- * * @return int 1 si succès, 0 si le joueur a annulé (avec -1).
+ * @return int 1 si succès, 0 si le joueur a annulé.
  */
 int positionnerBateau(Bateaux* b, Grille* g);
 
+/**
+ * @brief Lance la séquence de placement manuel pour toute la flotte.
+ * @param joueur Pointeur vers le joueur qui doit placer ses bateaux.
+ */
+void placerBateaux(Joueur *joueur);
 
 /**
  * @brief Place aléatoirement toute la flotte d'un joueur sur sa grille.
- * * Cette fonction génère des coordonnées et des orientations au hasard
- * pour les 5 bateaux du joueur. Elle garantit :
- * - Que les bateaux ne sortent pas de la grille (limites 0-9).
- * - Que les bateaux ne se chevauchent pas (pas de collisions).
- * * Utile pour l'Intelligence Artificielle ou pour un placement rapide ("Shuffle")
- * pour un joueur humain.
- * * @param j Pointeur vers le joueur dont on veut placer la flotte.
+ * Génère des coordonnées sans collision pour l'IA ou le placement rapide.
+ * @param j Pointeur vers le joueur.
  */
 void placerBateauxAleatoire(Joueur* j);
 
 
 /* ============================================================================
- * GESTION DES DÉGÂTS
+ * 3. GESTION DES DÉGÂTS
  * ============================================================================ */
 
 /**
  * @brief Ajoute un dégât au bateau (incrémente le compteur 'touche').
- * * Doit être appelé quand un tir touche ce bateau spécifique.
- * * @param b Pointeur vers le bateau touché.
+ * @param b Pointeur vers le bateau touché.
  */
 void enregistrerTouche(Bateaux* b);
 
 /**
- * @brief Vérifie si le bateau est coulé.
- * * Un bateau est coulé si son nombre de touches est égal à sa taille.
- * * @param b Pointeur vers le bateau.
+ * @brief Vérifie si le bateau est coulé (touches >= taille).
+ * @param b Pointeur vers le bateau.
  * @return int 1 si COULÉ, 0 sinon.
  */
 int estCoule(Bateaux* b);
 
 /**
  * @brief Vérifie si le bateau est touché mais pas encore coulé.
- * * @param b Pointeur vers le bateau.
+ * @param b Pointeur vers le bateau.
  * @return int 1 si TOUCHÉ (endommagé), 0 sinon.
  */
 int estTouche(Bateaux* b);
 
 /**
  * @brief Obtient un caractère représentant l'état du bateau.
- * * @param b Pointeur vers le bateau.
+ * @param b Pointeur vers le bateau.
  * @return char 'C' (Coulé), 'T' (Touché), 'O' (Opérationnel/Intact).
  */
 char obtenirEtat(Bateaux* b);
 
 
 /* ============================================================================
- * LOGIQUE SPATIALE 
+ * 4. LOGIQUE SPATIALE 
  * ============================================================================ */
 
 /**
  * @brief Vérifie si une coordonnée précise appartient à ce bateau.
- * * Calcule si (ligne, colonne) se trouve sur le segment occupé par le bateau,
- * en tenant compte de son point de départ, sa taille et son orientation.
- * * @param b Pointeur vers le bateau.
+ * @param b Pointeur vers le bateau.
  * @param ligne Ligne à tester.
  * @param colonne Colonne à tester.
- * * @return int 1 si la case appartient au bateau, 0 sinon.
+ * @return int 1 si la case appartient au bateau, 0 sinon.
  */
 int appartientAuBateau(Bateaux* b, int ligne, int colonne);
 
 /**
  * @brief Cherche quel bateau de la flotte se trouve à une position donnée.
- * * Parcourt toute la flotte et utilise 'appartientAuBateau' pour chaque navire.
- * * @param flotte Tableau des bateaux.
+ * @param flotte Tableau des bateaux.
  * @param ligne Ligne ciblée.
  * @param colonne Colonne ciblée.
- * * @return int L'index du bateau trouvé (0 à 4), ou -1 si aucun bateau n'est là.
+ * @return int L'index du bateau trouvé (0 à 4), ou -1 si aucun bateau n'est là.
  */
 int trouverBateau(Bateaux* flotte, int ligne, int colonne);
 
 /**
  * @brief Vérifie la condition de victoire (Tous les bateaux coulés).
- * * @param flotte Tableau des bateaux.
- * @return int 1 si TOUTE la flotte est coulée (Victoire adverse), 0 sinon.
+ * @param flotte Tableau des bateaux.
+ * @return int 1 si TOUTE la flotte est coulée (Victoire), 0 sinon.
  */
 int tousCoules(Bateaux* flotte);
 
